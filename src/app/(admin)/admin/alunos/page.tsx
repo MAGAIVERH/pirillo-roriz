@@ -4,8 +4,11 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudentSummaryCards } from '@/modules/students/components/student-summary-cards';
 import { StudentsTable } from '@/modules/students/components/students-table';
+import { getStudentsList } from '@/modules/students/queries/get-students-list';
 
-export default function AdminAlunosPage() {
+export default async function AdminAlunosPage() {
+  const students = await getStudentsList();
+
   return (
     <div className='space-y-6'>
       <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
@@ -20,9 +23,9 @@ export default function AdminAlunosPage() {
             </h1>
 
             <p className='max-w-3xl text-sm leading-6 text-zinc-400'>
-              Aqui começamos a estrutura real do módulo de alunos. Nesta
-              primeira etapa, vamos validar listagem, resumo visual e entrada
-              para o fluxo de cadastro.
+              Agora a listagem já usa dados reais do banco. A próxima evolução
+              será transformar os cards de resumo em indicadores reais e abrir o
+              fluxo de visualização detalhada do aluno.
             </p>
           </div>
 
@@ -40,7 +43,7 @@ export default function AdminAlunosPage() {
 
       <StudentSummaryCards />
 
-      <StudentsTable />
+      <StudentsTable students={students} />
     </div>
   );
 }

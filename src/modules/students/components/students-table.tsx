@@ -4,19 +4,23 @@ import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 
 import { StudentStatusBadge } from '@/modules/students/components/student-status-badge';
-import { studentsMock } from '@/modules/students/mock/students';
+import type { StudentListItem } from '@/modules/students/types/student-list-item';
 
-export const StudentsTable = () => {
+type StudentsTableProps = {
+  students: StudentListItem[];
+};
+
+export const StudentsTable = ({ students }: StudentsTableProps) => {
   const [search, setSearch] = useState('');
 
   const filteredStudents = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
     if (!normalizedSearch) {
-      return studentsMock;
+      return students;
     }
 
-    return studentsMock.filter((student) => {
+    return students.filter((student) => {
       return (
         student.fullName.toLowerCase().includes(normalizedSearch) ||
         student.email.toLowerCase().includes(normalizedSearch) ||
@@ -25,7 +29,7 @@ export const StudentsTable = () => {
         student.belt.toLowerCase().includes(normalizedSearch)
       );
     });
-  }, [search]);
+  }, [search, students]);
 
   return (
     <div className='space-y-4'>
@@ -36,7 +40,7 @@ export const StudentsTable = () => {
               Lista de alunos
             </h2>
             <p className='text-sm text-zinc-400'>
-              Estrutura inicial da listagem de alunos da academia.
+              Alunos reais cadastrados na academia.
             </p>
           </div>
 
@@ -100,7 +104,7 @@ export const StudentsTable = () => {
                     </td>
 
                     <td className='px-5 py-4 text-sm text-zinc-300'>
-                      {student.age} anos
+                      {student.age !== null ? `${student.age} anos` : '-'}
                     </td>
 
                     <td className='px-5 py-4 text-sm text-zinc-300'>
@@ -108,7 +112,7 @@ export const StudentsTable = () => {
                     </td>
 
                     <td className='px-5 py-4 text-sm text-zinc-300'>
-                      {new Date(student.joinDate).toLocaleDateString('pt-BR')}
+                      {student.joinDate}
                     </td>
 
                     <td className='px-5 py-4'>

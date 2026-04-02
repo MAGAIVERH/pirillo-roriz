@@ -13,7 +13,7 @@ export type StudentListItem = {
   email: string;
   phone: string;
   belt: string;
-  age: number;
+  age: number | null;
   status: StudentListStatus;
   joinDate: string;
   className: string;
