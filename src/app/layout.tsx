@@ -19,7 +19,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         {children}
 
         <Toaster
-          position='top-right'
+          position='bottom-center'
           toastOptions={{
             unstyled: true,
             classNames: {
