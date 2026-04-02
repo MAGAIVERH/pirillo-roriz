@@ -1,38 +1,43 @@
-import { UserPlus, Users, ShieldAlert, PauseCircle } from 'lucide-react';
+import { PauseCircle, ShieldAlert, UserCheck, Users } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { StudentsSummary } from '@/modules/students/queries/get-students-summary';
 
-const cards = [
+type StudentSummaryCardsProps = {
+  summary: StudentsSummary;
+};
+
+const cards = (summary: StudentsSummary) => [
   {
     title: 'Total de alunos',
-    value: '128',
-    description: 'Quantidade total cadastrada atualmente.',
+    value: String(summary.totalStudents),
+    description: 'Quantidade total de alunos operacionais cadastrados.',
     icon: Users,
   },
   {
     title: 'Alunos ativos',
-    value: '97',
+    value: String(summary.activeStudents),
     description: 'Total de alunos com matrícula ativa.',
-    icon: UserPlus,
+    icon: UserCheck,
   },
   {
     title: 'Inadimplentes',
-    value: '8',
+    value: String(summary.delinquentStudents),
     description: 'Alunos com pendência financeira.',
     icon: ShieldAlert,
   },
   {
     title: 'Trancados',
-    value: '6',
+    value: String(summary.frozenStudents),
     description: 'Alunos com matrícula temporariamente pausada.',
     icon: PauseCircle,
   },
 ];
 
-export const StudentSummaryCards = () => {
+export const StudentSummaryCards = ({ summary }: StudentSummaryCardsProps) => {
   return (
     <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-      {cards.map(({ title, value, description, icon: Icon }) => (
+      {cards(summary).map(({ title, value, description, icon: Icon }) => (
         <Card key={title} className='border-white/10 bg-zinc-950 text-white'>
           <CardHeader className='flex flex-row items-start justify-between space-y-0'>
             <div className='space-y-2'>

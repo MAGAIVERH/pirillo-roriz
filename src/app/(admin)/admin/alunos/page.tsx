@@ -5,9 +5,13 @@ import { Button } from '@/components/ui/button';
 import { StudentSummaryCards } from '@/modules/students/components/student-summary-cards';
 import { StudentsTable } from '@/modules/students/components/students-table';
 import { getStudentsList } from '@/modules/students/queries/get-students-list';
+import { getStudentsSummary } from '@/modules/students/queries/get-students-summary';
 
 export default async function AdminAlunosPage() {
-  const students = await getStudentsList();
+  const [students, summary] = await Promise.all([
+    getStudentsList(),
+    getStudentsSummary(),
+  ]);
 
   return (
     <div className='space-y-6'>
@@ -23,9 +27,9 @@ export default async function AdminAlunosPage() {
             </h1>
 
             <p className='max-w-3xl text-sm leading-6 text-zinc-400'>
-              Agora a listagem já usa dados reais do banco. A próxima evolução
-              será transformar os cards de resumo em indicadores reais e abrir o
-              fluxo de visualização detalhada do aluno.
+              Agora a listagem e os cards já usam dados reais do banco. A
+              próxima evolução será abrir o fluxo de visualização detalhada do
+              aluno e filtros mais completos.
             </p>
           </div>
 
@@ -41,7 +45,7 @@ export default async function AdminAlunosPage() {
         </div>
       </section>
 
-      <StudentSummaryCards />
+      <StudentSummaryCards summary={summary} />
 
       <StudentsTable students={students} />
     </div>
