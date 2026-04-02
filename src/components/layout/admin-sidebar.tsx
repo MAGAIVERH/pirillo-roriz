@@ -34,7 +34,7 @@ export const AdminSidebar = () => {
           <p className='text-xs font-semibold uppercase tracking-[0.2em] text-red-500'>
             Academia
           </p>
-          <h2 className='text-2xl font-bold text-white'>Pirillo Roriz</h2>
+          <h2 className='text-2xl font-bold text-white'>Gracie Barra</h2>
           <p className='text-sm text-zinc-400'>Painel administrativo</p>
         </div>
       </div>
