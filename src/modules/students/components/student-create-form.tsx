@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { Controller, useForm } from 'react-hook-form';
 
 import { cn } from '@/lib/utils';
@@ -31,6 +32,14 @@ import {
   type CreateStudentSchema,
 } from '@/modules/students/schemas/create-student-schema';
 
+type StudentCreateFormProps = {
+  onSubmitAction: (values: CreateStudentSchema) => Promise<{
+    success: boolean;
+    message: string;
+    studentId?: string;
+  }>;
+};
+
 const formatPhone = (value: string) => {
   const digits = value.replace(/\D/g, '').slice(0, 11);
 
@@ -53,9 +62,12 @@ const formatPhone = (value: string) => {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 };
 
-export const StudentCreateForm = () => {
+export const StudentCreateForm = ({
+  onSubmitAction,
+}: StudentCreateFormProps) => {
   const [submittedData, setSubmittedData] =
     useState<CreateStudentSchema | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<CreateStudentSchema>({
     resolver: zodResolver(createStudentSchema),
@@ -75,8 +87,32 @@ export const StudentCreateForm = () => {
   });
 
   const onSubmit = (values: CreateStudentSchema) => {
-    console.log('create student form values', values);
-    setSubmittedData(values);
+    startTransition(async () => {
+      const result = await onSubmitAction(values);
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setSubmittedData(values);
+      toast.success(result.message);
+
+      form.reset({
+        fullName: '',
+        preferredName: '',
+        birthDate: undefined,
+        email: '',
+        phone: '',
+        gender: '',
+        status: '',
+        belt: '',
+        mainClass: '',
+        goal: '',
+        leadSource: '',
+        notes: '',
+      });
+    });
   };
 
   return (
@@ -466,6 +502,25 @@ export const StudentCreateForm = () => {
             type='button'
             variant='outline'
             className='border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
+            disabled={isPending}
+            onClick={() => {
+              form.reset({
+                fullName: '',
+                preferredName: '',
+                birthDate: undefined,
+                email: '',
+                phone: '',
+                gender: '',
+                status: '',
+                belt: '',
+                mainClass: '',
+                goal: '',
+                leadSource: '',
+                notes: '',
+              });
+
+              setSubmittedData(null);
+            }}
           >
             Cancelar
           </Button>
@@ -473,8 +528,9 @@ export const StudentCreateForm = () => {
           <Button
             type='submit'
             className='bg-red-600 text-white hover:bg-red-500'
+            disabled={isPending}
           >
-            Salvar aluno
+            {isPending ? 'Salvando...' : 'Salvar aluno'}
           </Button>
         </div>
       </form>

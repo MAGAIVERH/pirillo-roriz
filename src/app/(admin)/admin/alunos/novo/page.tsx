@@ -1,4 +1,5 @@
 import { StudentCreateForm } from '@/modules/students/components/student-create-form';
+import { createStudentAction } from '@/modules/students/actions/create-student';
 
 export default function AdminNovoAlunoPage() {
   return (
@@ -12,14 +13,14 @@ export default function AdminNovoAlunoPage() {
           <h1 className='text-3xl font-bold tracking-tight'>Novo aluno</h1>
 
           <p className='max-w-3xl text-sm leading-6 text-zinc-400'>
-            Aqui começamos a estrutura do cadastro de aluno. Nesta etapa, vamos
-            montar a base visual do formulário antes de conectar com validação,
-            server actions e persistência real.
+            Agora esta tela já salva o aluno de verdade no banco, incluindo
+            faixa inicial, histórico de status e matrícula básica quando o
+            status não for lead.
           </p>
         </div>
       </section>
 
-      <StudentCreateForm />
+      <StudentCreateForm onSubmitAction={createStudentAction} />
     </div>
   );
 }
