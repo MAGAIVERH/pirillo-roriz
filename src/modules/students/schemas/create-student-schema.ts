@@ -20,10 +20,10 @@ export const createStudentSchema = z.object({
   ),
   gender: z.string().min(1, 'Selecione o sexo.'),
   status: z.string().min(1, 'Selecione o status inicial.'),
-  belt: z.string().min(1, 'Selecione a faixa inicial.'),
-  mainClass: z.string().min(1, 'Selecione a turma principal.'),
+  beltId: z.string().min(1, 'Selecione a faixa inicial.'),
+  mainClassId: z.string().min(1, 'Selecione a turma principal.'),
   goal: z.string().min(1, 'Selecione o objetivo principal.'),
-  leadSource: z.string().min(1, 'Selecione a origem do aluno.'),
+  leadSourceId: z.string().min(1, 'Selecione a origem do aluno.'),
   notes: z.string().optional(),
 });
 

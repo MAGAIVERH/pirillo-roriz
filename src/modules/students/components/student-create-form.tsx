@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,6 +39,20 @@ type StudentCreateFormProps = {
     message: string;
     studentId?: string;
   }>;
+  belts: {
+    id: string;
+    name: string;
+    adultCategory: boolean;
+    juvenileCategory: boolean;
+  }[];
+  classes: {
+    id: string;
+    name: string;
+  }[];
+  leadSources: {
+    id: string;
+    name: string;
+  }[];
 };
 
 const formatPhone = (value: string) => {
@@ -64,9 +79,11 @@ const formatPhone = (value: string) => {
 
 export const StudentCreateForm = ({
   onSubmitAction,
+  belts,
+  classes,
+  leadSources,
 }: StudentCreateFormProps) => {
-  const [submittedData, setSubmittedData] =
-    useState<CreateStudentSchema | null>(null);
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<CreateStudentSchema>({
@@ -78,10 +95,10 @@ export const StudentCreateForm = ({
       phone: '',
       gender: '',
       status: '',
-      belt: '',
-      mainClass: '',
+      beltId: '',
+      mainClassId: '',
       goal: '',
-      leadSource: '',
+      leadSourceId: '',
       notes: '',
     },
   });
@@ -95,7 +112,6 @@ export const StudentCreateForm = ({
         return;
       }
 
-      setSubmittedData(values);
       toast.success(result.message);
 
       form.reset({
@@ -106,12 +122,17 @@ export const StudentCreateForm = ({
         phone: '',
         gender: '',
         status: '',
-        belt: '',
-        mainClass: '',
+        beltId: '',
+        mainClassId: '',
         goal: '',
-        leadSource: '',
+        leadSourceId: '',
         notes: '',
       });
+
+      setTimeout(() => {
+        router.push('/admin/alunos');
+        router.refresh();
+      }, 400);
     });
   };
 
@@ -348,7 +369,7 @@ export const StudentCreateForm = ({
 
           <CardContent className='grid gap-4 md:grid-cols-2'>
             <Controller
-              name='belt'
+              name='beltId'
               control={form.control}
               render={({ field, fieldState }) => (
                 <div className='space-y-2'>
@@ -361,11 +382,11 @@ export const StudentCreateForm = ({
                       <SelectValue placeholder='Selecione a faixa' />
                     </SelectTrigger>
                     <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
-                      <SelectItem value='white'>Branca</SelectItem>
-                      <SelectItem value='blue'>Azul</SelectItem>
-                      <SelectItem value='purple'>Roxa</SelectItem>
-                      <SelectItem value='brown'>Marrom</SelectItem>
-                      <SelectItem value='black'>Preta</SelectItem>
+                      {belts.map((belt) => (
+                        <SelectItem key={belt.id} value={belt.id}>
+                          {belt.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {fieldState.error ? (
@@ -378,7 +399,7 @@ export const StudentCreateForm = ({
             />
 
             <Controller
-              name='mainClass'
+              name='mainClassId'
               control={form.control}
               render={({ field, fieldState }) => (
                 <div className='space-y-2'>
@@ -391,14 +412,11 @@ export const StudentCreateForm = ({
                       <SelectValue placeholder='Selecione a turma' />
                     </SelectTrigger>
                     <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
-                      <SelectItem value='adulto-iniciante'>
-                        Jiu-Jitsu Adulto Iniciante
-                      </SelectItem>
-                      <SelectItem value='kids'>Jiu-Jitsu Kids</SelectItem>
-                      <SelectItem value='nogi'>Jiu-Jitsu No-Gi</SelectItem>
-                      <SelectItem value='competicao'>
-                        Jiu-Jitsu Competição
-                      </SelectItem>
+                      {classes.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {fieldState.error ? (
@@ -442,7 +460,7 @@ export const StudentCreateForm = ({
             />
 
             <Controller
-              name='leadSource'
+              name='leadSourceId'
               control={form.control}
               render={({ field, fieldState }) => (
                 <div className='space-y-2'>
@@ -455,10 +473,11 @@ export const StudentCreateForm = ({
                       <SelectValue placeholder='Selecione a origem' />
                     </SelectTrigger>
                     <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
-                      <SelectItem value='instagram'>Instagram</SelectItem>
-                      <SelectItem value='indication'>Indicação</SelectItem>
-                      <SelectItem value='whatsapp'>WhatsApp</SelectItem>
-                      <SelectItem value='street'>Passagem em frente</SelectItem>
+                      {leadSources.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {fieldState.error ? (
@@ -512,14 +531,12 @@ export const StudentCreateForm = ({
                 phone: '',
                 gender: '',
                 status: '',
-                belt: '',
-                mainClass: '',
+                beltId: '',
+                mainClassId: '',
                 goal: '',
-                leadSource: '',
+                leadSourceId: '',
                 notes: '',
               });
-
-              setSubmittedData(null);
             }}
           >
             Cancelar
@@ -534,20 +551,6 @@ export const StudentCreateForm = ({
           </Button>
         </div>
       </form>
-
-      {submittedData ? (
-        <Card className='border-white/10 bg-zinc-950 text-white'>
-          <CardHeader>
-            <CardTitle className='text-xl'>Dados enviados no teste</CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <pre className='overflow-x-auto rounded-xl border border-white/10 bg-zinc-900 p-4 text-xs text-zinc-300'>
-              {JSON.stringify(submittedData, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 };

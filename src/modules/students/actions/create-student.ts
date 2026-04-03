@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import {
   EnrollmentStatus,
   Gender,
+  StudentGoal,
   StudentStatus,
 } from '@/generated/prisma/client';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
@@ -33,26 +34,11 @@ const statusMap: Record<string, StudentStatus> = {
   active: StudentStatus.ACTIVE,
 };
 
-const beltNameMap: Record<string, string> = {
-  white: 'Branca',
-  blue: 'Azul',
-  purple: 'Roxa',
-  brown: 'Marrom',
-  black: 'Preta',
-};
-
-const classNameMap: Record<string, string> = {
-  'adulto-iniciante': 'Jiu-Jitsu Adulto Iniciante',
-  kids: 'Jiu-Jitsu Kids',
-  nogi: 'Jiu-Jitsu No-Gi',
-  competicao: 'Jiu-Jitsu Competição',
-};
-
-const leadSourceNameMap: Record<string, string> = {
-  instagram: 'Instagram',
-  indication: 'Indicação',
-  whatsapp: 'WhatsApp',
-  street: 'Passagem em frente',
+const goalMap: Record<string, StudentGoal> = {
+  health: StudentGoal.HEALTH,
+  'self-defense': StudentGoal.SELF_DEFENSE,
+  competition: StudentGoal.COMPETITION,
+  hobby: StudentGoal.HOBBY,
 };
 
 export const createStudentAction = async (
@@ -71,27 +57,35 @@ export const createStudentAction = async (
   try {
     const academy = await getOrCreateDefaultAcademy();
 
-    const selectedBeltName = beltNameMap[parsed.data.belt];
-    const selectedClassName = classNameMap[parsed.data.mainClass];
-    const selectedLeadSourceName = leadSourceNameMap[parsed.data.leadSource];
-
     const [belt, mainClass, leadSource] = await Promise.all([
       db.belt.findFirst({
         where: {
+          id: parsed.data.beltId,
           academyId: academy.id,
-          name: selectedBeltName,
+          active: true,
+        },
+        select: {
+          id: true,
         },
       }),
       db.class.findFirst({
         where: {
+          id: parsed.data.mainClassId,
           academyId: academy.id,
-          name: selectedClassName,
+          active: true,
+        },
+        select: {
+          id: true,
         },
       }),
       db.leadSource.findFirst({
         where: {
+          id: parsed.data.leadSourceId,
           academyId: academy.id,
-          name: selectedLeadSourceName,
+          active: true,
+        },
+        select: {
+          id: true,
         },
       }),
     ]);
@@ -120,6 +114,7 @@ export const createStudentAction = async (
     const normalizedPhone = parsed.data.phone.replace(/\D/g, '');
     const mappedGender = genderMap[parsed.data.gender];
     const mappedStatus = statusMap[parsed.data.status];
+    const mappedGoal = goalMap[parsed.data.goal];
     const now = new Date();
 
     const student = await db.$transaction(async (tx) => {
@@ -135,14 +130,7 @@ export const createStudentAction = async (
           status: mappedStatus,
           joinDate: now,
           leadSourceId: leadSource.id,
-          goal:
-            parsed.data.goal === 'health'
-              ? 'HEALTH'
-              : parsed.data.goal === 'self-defense'
-              ? 'SELF_DEFENSE'
-              : parsed.data.goal === 'competition'
-              ? 'COMPETITION'
-              : 'HOBBY',
+          goal: mappedGoal,
           notes: parsed.data.notes || null,
         },
       });
