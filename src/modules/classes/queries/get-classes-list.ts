@@ -8,6 +8,7 @@ export type ClassListItem = {
   instructor: string;
   capacity: string;
   schedules: string[];
+  schedulesCount: number;
   active: boolean;
   enrollmentsCount: number;
 };
@@ -71,6 +72,7 @@ export const getClassesList = async (): Promise<ClassListItem[]> => {
               }`,
           )
         : ['Sem horários cadastrados'],
+    schedulesCount: item.schedules.length,
     active: item.active,
     enrollmentsCount: item.enrollments.length,
   }));
