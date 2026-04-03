@@ -13,6 +13,7 @@ const updateClassSettingsSchema = z.object({
     .string()
     .min(2, 'O tipo da turma deve ter pelo menos 2 caracteres.'),
   capacity: z.string().optional(),
+  instructorId: z.string().optional(),
 });
 
 type UpdateClassSettingsInput = z.infer<typeof updateClassSettingsSchema>;
@@ -87,6 +88,27 @@ export const updateClassSettingsAction = async (
       });
     }
 
+    const normalizedInstructorId = parsed.data.instructorId?.trim() ?? '';
+
+    if (normalizedInstructorId) {
+      const instructor = await db.instructor.findFirst({
+        where: {
+          id: normalizedInstructorId,
+          academyId: academy.id,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!instructor) {
+        return {
+          success: false,
+          message: 'Professor não encontrado.',
+        };
+      }
+    }
+
     await db.class.update({
       where: {
         id: parsed.data.classId,
@@ -94,12 +116,14 @@ export const updateClassSettingsAction = async (
       data: {
         name: parsed.data.name.trim(),
         classTypeId: classType.id,
+        instructorId: normalizedInstructorId || null,
         capacity: normalizedCapacity ? Number(normalizedCapacity) : null,
       },
     });
 
     revalidatePath('/admin/turmas');
     revalidatePath(`/admin/turmas/${parsed.data.classId}`);
+    revalidatePath('/admin/professores');
 
     return {
       success: true,

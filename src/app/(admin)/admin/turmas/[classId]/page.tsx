@@ -107,6 +107,8 @@ export default async function AdminClassDetailsPage({
         currentName={foundClass.name}
         currentTypeName={foundClass.type}
         currentCapacity={foundClass.capacity}
+        currentInstructorId={foundClass.instructorId}
+        availableInstructors={foundClass.availableInstructors}
         schedules={foundClass.schedules}
       />
     </div>

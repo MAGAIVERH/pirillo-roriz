@@ -23,6 +23,11 @@ type ClassScheduleManagerProps = {
   currentName: string;
   currentTypeName: string;
   currentCapacity: number | null;
+  currentInstructorId: string;
+  availableInstructors: {
+    id: string;
+    fullName: string;
+  }[];
   schedules: {
     id: string;
     weekDay: string;
@@ -56,12 +61,17 @@ export const ClassScheduleManager = ({
   currentName,
   currentTypeName,
   currentCapacity,
+  currentInstructorId,
+  availableInstructors,
   schedules,
 }: ClassScheduleManagerProps) => {
   const [name, setName] = useState(currentName);
   const [classTypeName, setClassTypeName] = useState(currentTypeName);
   const [capacity, setCapacity] = useState(
     currentCapacity ? String(currentCapacity) : '',
+  );
+  const [instructorId, setInstructorId] = useState(
+    currentInstructorId || '__none__',
   );
 
   const [weekDay, setWeekDay] = useState<WeekDayValue | ''>('');
@@ -84,6 +94,10 @@ export const ClassScheduleManager = ({
     setCapacity(currentCapacity ? String(currentCapacity) : '');
   }, [currentCapacity]);
 
+  useEffect(() => {
+    setInstructorId(currentInstructorId || '__none__');
+  }, [currentInstructorId]);
+
   const handleUpdateSettings = () => {
     startSettingsTransition(async () => {
       const result = await updateClassSettingsAction({
@@ -91,6 +105,7 @@ export const ClassScheduleManager = ({
         name,
         classTypeName,
         capacity,
+        instructorId: instructorId === '__none__' ? '' : instructorId,
       });
 
       if (!result.success) {
@@ -150,8 +165,8 @@ export const ClassScheduleManager = ({
           <CardTitle className='text-xl'>Configurações básicas</CardTitle>
         </CardHeader>
 
-        <CardContent className='grid gap-4 lg:grid-cols-[1.3fr_1fr_0.8fr_auto] lg:items-end'>
-          <div className='space-y-2'>
+        <CardContent className='grid gap-4 lg:grid-cols-2'>
+          <div className='space-y-2 lg:col-span-2'>
             <p className='text-sm text-zinc-400'>Nome da turma</p>
             <Input
               value={name}
@@ -183,14 +198,35 @@ export const ClassScheduleManager = ({
             />
           </div>
 
-          <Button
-            type='button'
-            onClick={handleUpdateSettings}
-            disabled={isUpdatingSettings}
-            className='bg-red-600 text-white hover:bg-red-500'
-          >
-            {isUpdatingSettings ? 'Salvando...' : 'Salvar'}
-          </Button>
+          <div className='space-y-2 lg:col-span-2'>
+            <p className='text-sm text-zinc-400'>Professor responsável</p>
+            <Select value={instructorId} onValueChange={setInstructorId}>
+              <SelectTrigger className='border-white/10 bg-zinc-900 text-white'>
+                <SelectValue placeholder='Selecione o professor' />
+              </SelectTrigger>
+              <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                <SelectItem value='__none__'>
+                  Sem professor vinculado
+                </SelectItem>
+                {availableInstructors.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className='lg:col-span-2'>
+            <Button
+              type='button'
+              onClick={handleUpdateSettings}
+              disabled={isUpdatingSettings}
+              className='bg-red-600 text-white hover:bg-red-500'
+            >
+              {isUpdatingSettings ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -223,21 +259,23 @@ export const ClassScheduleManager = ({
             <div className='grid gap-4 sm:grid-cols-2'>
               <div className='space-y-2'>
                 <p className='text-sm text-zinc-400'>Hora inicial</p>
-                <input
-                  type='time'
+                <Input
                   value={startTime}
                   onChange={(event) => setStartTime(event.target.value)}
-                  className='h-10 w-full rounded-md border border-white/10 bg-zinc-900 px-3 text-sm text-white outline-none'
+                  placeholder='HH:mm'
+                  inputMode='numeric'
+                  className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
                 />
               </div>
 
               <div className='space-y-2'>
                 <p className='text-sm text-zinc-400'>Hora final</p>
-                <input
-                  type='time'
+                <Input
                   value={endTime}
                   onChange={(event) => setEndTime(event.target.value)}
-                  className='h-10 w-full rounded-md border border-white/10 bg-zinc-900 px-3 text-sm text-white outline-none'
+                  placeholder='HH:mm'
+                  inputMode='numeric'
+                  className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
                 />
               </div>
             </div>

@@ -49,12 +49,28 @@ export const getClassById = async (classId: string) => {
     notFound();
   }
 
+  const availableInstructors = await db.instructor.findMany({
+    where: {
+      academyId: academy.id,
+      active: true,
+    },
+    orderBy: {
+      fullName: 'asc',
+    },
+    select: {
+      id: true,
+      fullName: true,
+    },
+  });
+
   return {
     id: foundClass.id,
     name: foundClass.name,
     description: foundClass.description || '-',
     type: foundClass.classType.name,
     instructor: foundClass.instructor?.fullName || 'Sem professor vinculado',
+    instructorId: foundClass.instructorId ?? '',
+    availableInstructors,
     capacity: foundClass.capacity,
     capacityLabel: foundClass.capacity
       ? `${foundClass.capacity} vagas`
