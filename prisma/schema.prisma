@@ -448,17 +448,20 @@ model Instructor {
   phone      String?
   bio        String?
   hireDate   DateTime?
+  birthDate  DateTime?
+  belt       String?
+  beltDegree Int?     @default(0)
   active     Boolean  @default(true)
   notes      String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  academy           Academy            @relation(fields: [academyId], references: [id], onDelete: Cascade)
-  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
-  classes           Class[]
-  classSessions     ClassSession[]
-  graduationHistory GraduationHistory[]
-  evaluations       StudentEvaluation[]
+  academy            Academy              @relation(fields: [academyId], references: [id], onDelete: Cascade)
+  user               User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  classes            Class[]
+  classSessions      ClassSession[]
+  graduationHistory  GraduationHistory[]
+  evaluations        StudentEvaluation[]
 
   @@index([academyId, active])
 }
