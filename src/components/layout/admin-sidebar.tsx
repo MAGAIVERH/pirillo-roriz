@@ -18,6 +18,7 @@ const navigation = [
   { label: 'Alunos', href: '/admin/alunos', icon: Users },
   { label: 'Professores', href: '/admin/professores', icon: GraduationCap },
   { label: 'Turmas', href: '/admin/turmas', icon: CalendarDays },
+  { label: 'Graduação', href: '/admin/graduacao/regras', icon: GraduationCap },
   { label: 'Financeiro', href: '/admin/financeiro', icon: Wallet },
   { label: 'Loja', href: '/admin/loja', icon: ShoppingBag },
   { label: 'Avisos', href: '/admin/avisos', icon: Megaphone },
