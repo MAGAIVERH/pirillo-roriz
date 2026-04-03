@@ -4,9 +4,12 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StudentAttendanceHistoryCard } from '@/modules/students/components/student-attendance-history-card';
+import { StudentProgressCard } from '@/modules/students/components/student-progress-card';
 import { StudentStatusBadge } from '@/modules/students/components/student-status-badge';
+
 import { getStudentAttendanceHistory } from '@/modules/students/queries/get-student-attendance-history';
 import { getStudentById } from '@/modules/students/queries/get-student-by-id';
+import { calculateStudentProgress } from '@/modules/students/lib/calcule-student-progress';
 
 type AdminAlunoDetailsPageProps = {
   params: Promise<{
@@ -41,10 +44,31 @@ export default async function AdminAlunoDetailsPage({
 }: AdminAlunoDetailsPageProps) {
   const { studentId } = await params;
 
-  const [student, attendances] = await Promise.all([
+  const [student, attendances, progressResult] = await Promise.all([
     getStudentById(studentId),
     getStudentAttendanceHistory(studentId),
+    calculateStudentProgress(studentId),
   ]);
+
+  const progress =
+    progressResult.success && progressResult.progress
+      ? {
+          program: progressResult.progress.program,
+          projectedEligibilityDate:
+            progressResult.progress.projectedEligibilityDate?.toLocaleDateString(
+              'pt-BR',
+            ) ?? '-',
+          status: progressResult.progress.status,
+          attendancesSincePromotion:
+            progressResult.progress.attendancesSincePromotion,
+          absencesSincePromotion:
+            progressResult.progress.absencesSincePromotion,
+          lastAttendanceAt:
+            progressResult.progress.lastAttendanceAt?.toLocaleDateString(
+              'pt-BR',
+            ) ?? '-',
+        }
+      : null;
 
   return (
     <div className='space-y-6'>
@@ -163,6 +187,8 @@ export default async function AdminAlunoDetailsPage({
           </CardContent>
         </Card>
       </section>
+
+      <StudentProgressCard studentId={student.id} progress={progress} />
 
       <StudentAttendanceHistoryCard
         studentId={student.id}
