@@ -6,8 +6,10 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { createInstructorAction } from '@/modules/instructors/actions/create-instructor';
+
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +28,10 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import {
+  CreateInstructorFormData,
+  createInstructorSchema,
+} from '../schema/create-instructor-schema';
 
 const beltOptions = [
   'Branca',
@@ -35,7 +41,9 @@ const beltOptions = [
   'Preta',
   'Coral',
   'Vermelha',
-];
+] as const;
+
+type FormErrors = Partial<Record<keyof CreateInstructorFormData, string>>;
 
 const formatPhone = (value: string) => {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -59,6 +67,20 @@ const formatPhone = (value: string) => {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 };
 
+const getFieldErrorMap = (error: z.ZodError<CreateInstructorFormData>) => {
+  const errors: FormErrors = {};
+
+  error.issues.forEach((issue) => {
+    const field = issue.path[0] as keyof CreateInstructorFormData | undefined;
+
+    if (field && !errors[field]) {
+      errors[field] = issue.message;
+    }
+  });
+
+  return errors;
+};
+
 export const InstructorCreateForm = () => {
   const router = useRouter();
 
@@ -70,20 +92,45 @@ export const InstructorCreateForm = () => {
   const [belt, setBelt] = useState('');
   const [beltDegree, setBeltDegree] = useState('');
   const [notes, setNotes] = useState('');
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isPending, startTransition] = useTransition();
 
+  const clearFieldError = (field: keyof CreateInstructorFormData) => {
+    setErrors((prev) => {
+      if (!prev[field]) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [field]: undefined,
+      };
+    });
+  };
+
   const handleSubmit = () => {
+    const formData: CreateInstructorFormData = {
+      fullName,
+      birthDate: birthDate ? format(birthDate, 'yyyy-MM-dd') : '',
+      email,
+      phone,
+      status: status as 'ACTIVE' | 'INACTIVE',
+      belt,
+      beltDegree,
+      notes,
+    };
+
+    const parsed = createInstructorSchema.safeParse(formData);
+
+    if (!parsed.success) {
+      setErrors(getFieldErrorMap(parsed.error));
+      return;
+    }
+
+    setErrors({});
+
     startTransition(async () => {
-      const result = await createInstructorAction({
-        fullName,
-        birthDate: birthDate ? format(birthDate, 'yyyy-MM-dd') : '',
-        email,
-        phone,
-        status: status as 'ACTIVE' | 'INACTIVE',
-        belt,
-        beltDegree,
-        notes,
-      });
+      const result = await createInstructorAction(parsed.data);
 
       if (!result.success) {
         toast.error(result.message);
@@ -111,10 +158,16 @@ export const InstructorCreateForm = () => {
             <p className='text-sm text-zinc-400'>Nome completo</p>
             <Input
               value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
+              onChange={(event) => {
+                setFullName(event.target.value);
+                clearFieldError('fullName');
+              }}
               placeholder='Digite o nome completo do professor'
               className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
             />
+            {errors.fullName ? (
+              <p className='text-sm text-red-400'>{errors.fullName}</p>
+            ) : null}
           </div>
 
           <div className='space-y-2'>
@@ -144,7 +197,10 @@ export const InstructorCreateForm = () => {
                 <Calendar
                   mode='single'
                   selected={birthDate}
-                  onSelect={setBirthDate}
+                  onSelect={(date) => {
+                    setBirthDate(date);
+                    clearFieldError('birthDate');
+                  }}
                   captionLayout='dropdown'
                   fromYear={1940}
                   toYear={new Date().getFullYear()}
@@ -153,15 +209,20 @@ export const InstructorCreateForm = () => {
                 />
               </PopoverContent>
             </Popover>
+
+            {errors.birthDate ? (
+              <p className='text-sm text-red-400'>{errors.birthDate}</p>
+            ) : null}
           </div>
 
           <div className='space-y-2'>
             <p className='text-sm text-zinc-400'>Status</p>
             <Select
               value={status}
-              onValueChange={(value) =>
-                setStatus(value as 'ACTIVE' | 'INACTIVE')
-              }
+              onValueChange={(value) => {
+                setStatus(value as 'ACTIVE' | 'INACTIVE');
+                clearFieldError('status');
+              }}
             >
               <SelectTrigger className='border-white/10 bg-zinc-900 text-white'>
                 <SelectValue placeholder='Selecione o status' />
@@ -171,6 +232,9 @@ export const InstructorCreateForm = () => {
                 <SelectItem value='INACTIVE'>Inativo</SelectItem>
               </SelectContent>
             </Select>
+            {errors.status ? (
+              <p className='text-sm text-red-400'>{errors.status}</p>
+            ) : null}
           </div>
 
           <div className='space-y-2'>
@@ -178,25 +242,43 @@ export const InstructorCreateForm = () => {
             <Input
               type='email'
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                clearFieldError('email');
+              }}
               placeholder='email@exemplo.com'
               className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
             />
+            {errors.email ? (
+              <p className='text-sm text-red-400'>{errors.email}</p>
+            ) : null}
           </div>
 
           <div className='space-y-2'>
             <p className='text-sm text-zinc-400'>Telefone</p>
             <Input
               value={phone}
-              onChange={(event) => setPhone(formatPhone(event.target.value))}
+              onChange={(event) => {
+                setPhone(formatPhone(event.target.value));
+                clearFieldError('phone');
+              }}
               placeholder='(85) 99999-9999'
               className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
             />
+            {errors.phone ? (
+              <p className='text-sm text-red-400'>{errors.phone}</p>
+            ) : null}
           </div>
 
           <div className='space-y-2'>
             <p className='text-sm text-zinc-400'>Faixa</p>
-            <Select value={belt} onValueChange={setBelt}>
+            <Select
+              value={belt}
+              onValueChange={(value) => {
+                setBelt(value);
+                clearFieldError('belt');
+              }}
+            >
               <SelectTrigger className='border-white/10 bg-zinc-900 text-white'>
                 <SelectValue placeholder='Selecione a faixa' />
               </SelectTrigger>
@@ -208,6 +290,9 @@ export const InstructorCreateForm = () => {
                 ))}
               </SelectContent>
             </Select>
+            {errors.belt ? (
+              <p className='text-sm text-red-400'>{errors.belt}</p>
+            ) : null}
           </div>
 
           <div className='space-y-2'>
@@ -217,10 +302,16 @@ export const InstructorCreateForm = () => {
               min={0}
               max={6}
               value={beltDegree}
-              onChange={(event) => setBeltDegree(event.target.value)}
+              onChange={(event) => {
+                setBeltDegree(event.target.value);
+                clearFieldError('beltDegree');
+              }}
               placeholder='0'
               className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
             />
+            {errors.beltDegree ? (
+              <p className='text-sm text-red-400'>{errors.beltDegree}</p>
+            ) : null}
           </div>
 
           <div className='space-y-2 lg:col-span-2'>
