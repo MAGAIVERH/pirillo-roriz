@@ -6,11 +6,12 @@ import { z } from 'zod';
 import {
   AttendanceSource,
   AttendanceStatus,
-  ClassSessionStatus,
   ClassLevel,
+  ClassSessionStatus,
 } from '@/generated/prisma/client';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
+import { calculateStudentProgress } from '../lib/calcule-student-progress';
 
 const createStudentManualAttendanceSchema = z.object({
   studentId: z.string().min(1, 'Aluno inválido.'),
@@ -127,7 +128,7 @@ export const createStudentManualAttendanceAction = async (
           startsAt: attendanceDate,
           endsAt: attendanceDate,
           status: ClassSessionStatus.CLOSED,
-          notes: `Presença histórica lançada manualmente`,
+          notes: 'Presença histórica lançada manualmente',
         },
         select: {
           id: true,
@@ -166,6 +167,8 @@ export const createStudentManualAttendanceAction = async (
         notes: parsed.data.notes?.trim() || null,
       },
     });
+
+    await calculateStudentProgress(student.id);
 
     revalidatePath(`/admin/alunos/${student.id}`);
 
