@@ -12,31 +12,31 @@ datasource db {
 // ------------------------------------------------------
 
 model User {
-  id            String    @id
+  id            String   @id
   name          String
-  email         String    @unique
+  email         String   @unique
   emailVerified Boolean
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
 
-  sessions             Session[]
-  accounts             Account[]
-  roles                UserRoleAssignment[]
-  student              Student?
-  guardian             Guardian?
-  instructor           Instructor?
-  staffProfile         StaffProfile?
-  recordedAttendances  Attendance[]
-  scannedCheckIns      CheckInLog[]
-  receivedPayments     Payment[]
+  sessions              Session[]
+  accounts              Account[]
+  roles                 UserRoleAssignment[]
+  student               Student?
+  guardian              Guardian?
+  instructor            Instructor?
+  staffProfile          StaffProfile?
+  recordedAttendances   Attendance[]
+  scannedCheckIns       CheckInLog[]
+  receivedPayments      Payment[]
   createdFinancialNotes FinancialNote[]
-  stockMovements       StockMovement[]
-  pickupRecords        PickupRecord[]
-  announcements        Announcement[]
-  notifications        Notification[]
-  statusChanges        StudentStatusHistory[]
-  auditLogs            AuditLog[]
+  stockMovements        StockMovement[]
+  pickupRecords         PickupRecord[]
+  announcements         Announcement[]
+  notifications         Notification[]
+  statusChanges         StudentStatusHistory[]
+  auditLogs             AuditLog[]
 
   @@map("user")
 }
@@ -80,7 +80,7 @@ model Account {
 }
 
 model Verification {
-  id         String   @id
+  id         String    @id
   identifier String
   value      String
   expiresAt  DateTime
@@ -253,6 +253,17 @@ enum AnnouncementScope {
   CLASS_ONLY
 }
 
+enum GraduationProgram {
+  KIDS
+  ADULT
+}
+
+enum ProgressStatus {
+  ON_TRACK
+  ELIGIBLE
+  POSTPONED
+}
+
 // ------------------------------------------------------
 // Core academy
 // ------------------------------------------------------
@@ -293,6 +304,59 @@ model Academy {
   invoices            Invoice[]
   orders              Order[]
   auditLogs           AuditLog[]
+  graduationRules     GraduationRule[]
+  studentProgress     StudentProgress[]
+}
+
+model GraduationRule {
+  id                 String            @id @default(cuid())
+  academyId          String
+  program            GraduationProgram
+  currentBeltId      String
+  currentDegreeId    String?
+  minAge             Int?
+  maxAge             Int?
+  minimumMonths      Int
+  minimumAttendances Int
+  nextBeltId         String
+  nextDegreeId       String?
+  active             Boolean           @default(true)
+  displayOrder       Int               @default(0)
+  source             String?           @default("GRACIE_BARRA_BASE")
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  academy       Academy     @relation(fields: [academyId], references: [id], onDelete: Cascade)
+  currentBelt   Belt        @relation("RuleCurrentBelt", fields: [currentBeltId], references: [id], onDelete: Cascade)
+  currentDegree BeltDegree? @relation("RuleCurrentDegree", fields: [currentDegreeId], references: [id], onDelete: SetNull)
+  nextBelt      Belt        @relation("RuleNextBelt", fields: [nextBeltId], references: [id], onDelete: Cascade)
+  nextDegree    BeltDegree? @relation("RuleNextDegree", fields: [nextDegreeId], references: [id], onDelete: SetNull)
+
+  @@index([academyId, active])
+  @@index([academyId, program])
+  @@index([currentBeltId, currentDegreeId])
+}
+
+model StudentProgress {
+  id                        String            @id @default(cuid())
+  academyId                 String
+  studentId                 String            @unique
+  program                   GraduationProgram
+  projectedEligibilityDate  DateTime?
+  status                    ProgressStatus    @default(ON_TRACK)
+  attendancesSincePromotion Int               @default(0)
+  absencesSincePromotion    Int               @default(0)
+  lastAttendanceAt          DateTime?
+  lastRecalculatedAt        DateTime?
+  notes                     String?
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @updatedAt
+
+  academy Academy @relation(fields: [academyId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([academyId, status])
+  @@index([academyId, program])
 }
 
 model AcademySettings {
@@ -353,9 +417,9 @@ model Student {
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
-  academy             Academy              @relation(fields: [academyId], references: [id], onDelete: Cascade)
-  user                User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
-  leadSource          LeadSource?          @relation(fields: [leadSourceId], references: [id], onDelete: SetNull)
+  academy             Academy                @relation(fields: [academyId], references: [id], onDelete: Cascade)
+  user                User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  leadSource          LeadSource?            @relation(fields: [leadSourceId], references: [id], onDelete: SetNull)
   address             StudentAddress?
   guardians           StudentGuardian[]
   emergencyContacts   EmergencyContact[]
@@ -372,6 +436,7 @@ model Student {
   orders              Order[]
   statusHistory       StudentStatusHistory[]
   announcementTargets AnnouncementTarget[]
+  progress            StudentProgress?
 
   @@index([academyId, status])
   @@index([academyId, joinDate])
@@ -428,7 +493,7 @@ model StudentGuardian {
 }
 
 model EmergencyContact {
-  id           String @id @default(cuid())
+  id           String  @id @default(cuid())
   studentId    String
   name         String
   phone        String?
@@ -440,9 +505,9 @@ model EmergencyContact {
 }
 
 model Instructor {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   academyId  String
-  userId     String?  @unique
+  userId     String?   @unique
   fullName   String
   email      String?
   phone      String?
@@ -450,18 +515,18 @@ model Instructor {
   hireDate   DateTime?
   birthDate  DateTime?
   belt       String?
-  beltDegree Int?     @default(0)
-  active     Boolean  @default(true)
+  beltDegree Int?      @default(0)
+  active     Boolean   @default(true)
   notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  academy            Academy              @relation(fields: [academyId], references: [id], onDelete: Cascade)
-  user               User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
-  classes            Class[]
-  classSessions      ClassSession[]
-  graduationHistory  GraduationHistory[]
-  evaluations        StudentEvaluation[]
+  academy           Academy             @relation(fields: [academyId], references: [id], onDelete: Cascade)
+  user              User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  classes           Class[]
+  classSessions     ClassSession[]
+  graduationHistory GraduationHistory[]
+  evaluations       StudentEvaluation[]
 
   @@index([academyId, active])
 }
@@ -503,7 +568,7 @@ model CancellationReason {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  academy       Academy               @relation(fields: [academyId], references: [id], onDelete: Cascade)
+  academy       Academy                @relation(fields: [academyId], references: [id], onDelete: Cascade)
   statusHistory StudentStatusHistory[]
 
   @@unique([academyId, name])
@@ -531,17 +596,17 @@ model ClassType {
 }
 
 model Class {
-  id                 String   @id @default(cuid())
-  academyId          String
-  classTypeId        String
-  instructorId       String?
-  name               String
-  description        String?
-  location           String?
-  capacity           Int?
-  active             Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id           String   @id @default(cuid())
+  academyId    String
+  classTypeId  String
+  instructorId String?
+  name         String
+  description  String?
+  location     String?
+  capacity     Int?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   academy             Academy              @relation(fields: [academyId], references: [id], onDelete: Cascade)
   classType           ClassType            @relation(fields: [classTypeId], references: [id], onDelete: Restrict)
@@ -663,16 +728,16 @@ model CheckInLog {
 }
 
 model StudentQrToken {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   studentId  String
-  codeHash   String   @unique
+  codeHash   String    @unique
   expiresAt  DateTime?
-  isActive   Boolean  @default(true)
+  isActive   Boolean   @default(true)
   lastUsedAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
   logs    CheckInLog[]
 
   @@index([studentId, isActive])
@@ -694,11 +759,13 @@ model Belt {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  academy         Academy             @relation(fields: [academyId], references: [id], onDelete: Cascade)
-  degrees         BeltDegree[]
-  currentStudents StudentBeltStatus[]
-  graduationFrom  GraduationHistory[] @relation("GraduationFromBelt")
-  graduationTo    GraduationHistory[] @relation("GraduationToBelt")
+  academy          Academy             @relation(fields: [academyId], references: [id], onDelete: Cascade)
+  degrees          BeltDegree[]
+  currentStudents  StudentBeltStatus[]
+  graduationFrom   GraduationHistory[] @relation("GraduationFromBelt")
+  graduationTo     GraduationHistory[] @relation("GraduationToBelt")
+  ruleCurrentBelts GraduationRule[]    @relation("RuleCurrentBelt")
+  ruleNextBelts    GraduationRule[]    @relation("RuleNextBelt")
 
   @@unique([academyId, sortOrder])
   @@unique([academyId, name])
@@ -711,10 +778,12 @@ model BeltDegree {
   sortOrder    Int
   createdAt    DateTime @default(now())
 
-  belt            Belt                @relation(fields: [beltId], references: [id], onDelete: Cascade)
-  currentStudents StudentBeltStatus[]
-  graduationFrom  GraduationHistory[] @relation("GraduationFromDegree")
-  graduationTo    GraduationHistory[] @relation("GraduationToDegree")
+  belt               Belt                @relation(fields: [beltId], references: [id], onDelete: Cascade)
+  currentStudents    StudentBeltStatus[]
+  graduationFrom     GraduationHistory[] @relation("GraduationFromDegree")
+  graduationTo       GraduationHistory[] @relation("GraduationToDegree")
+  ruleCurrentDegrees GraduationRule[]    @relation("RuleCurrentDegree")
+  ruleNextDegrees    GraduationRule[]    @relation("RuleNextDegree")
 
   @@unique([beltId, degreeNumber])
 }
@@ -789,7 +858,7 @@ model Plan {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  academy       Academy                @relation(fields: [academyId], references: [id], onDelete: Cascade)
+  academy       Academy               @relation(fields: [academyId], references: [id], onDelete: Cascade)
   subscriptions StudentSubscription[]
 
   @@unique([academyId, name])
@@ -1029,13 +1098,13 @@ model AnnouncementTarget {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
   title     String
   message   String
   type      String?
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1047,11 +1116,11 @@ model Notification {
 // ------------------------------------------------------
 
 model StudentStatusHistory {
-  id              String        @id @default(cuid())
+  id              String         @id @default(cuid())
   studentId       String
   fromStatus      StudentStatus?
   toStatus        StudentStatus
-  changedAt       DateTime      @default(now())
+  changedAt       DateTime       @default(now())
   changedByUserId String?
   reasonId        String?
   notes           String?
