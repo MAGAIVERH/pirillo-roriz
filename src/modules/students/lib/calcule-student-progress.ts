@@ -85,11 +85,13 @@ export const calculateStudentProgress = async (studentId: string) => {
 
   const latestGraduationDate = student.graduationHistory[0]?.promotedAt ?? null;
 
-  const baseDate =
+  const baseDateRaw =
     latestGraduationDate ??
     student.beltStatus.promotedAt ??
     student.joinDate ??
     student.createdAt;
+
+  const baseDate = startOfDayUtc(baseDateRaw);
 
   const referenceAge = getStudentAge(student.birthDate, new Date());
 

@@ -24,7 +24,6 @@ export const getStudentAttendanceHistory = async (studentId: string) => {
         sessionDate: 'desc',
       },
     },
-    take: 20,
   });
 
   return attendances.map((item) => ({
@@ -33,6 +32,6 @@ export const getStudentAttendanceHistory = async (studentId: string) => {
     dateLabel: item.classSession.sessionDate.toLocaleDateString('pt-BR'),
     status: item.status,
     source: item.source,
-    notes: item.notes ?? item.classSession.notes ?? '-',
+    notes: item.notes?.trim() || '-',
   }));
 };

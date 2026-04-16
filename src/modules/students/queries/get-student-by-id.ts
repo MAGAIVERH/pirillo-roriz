@@ -48,6 +48,12 @@ export const getStudentById = async (studentId: string) => {
         },
         take: 1,
       },
+      graduationHistory: {
+        orderBy: {
+          promotedAt: 'desc',
+        },
+        take: 1,
+      },
     },
   });
 
@@ -56,6 +62,18 @@ export const getStudentById = async (studentId: string) => {
   }
 
   const activeEnrollment = student.enrollments[0];
+
+  const latestGraduationDate = student.graduationHistory[0]?.promotedAt ?? null;
+
+  const baseDate =
+    student.beltStatus?.promotedAt ??
+    student.joinDate ??
+    latestGraduationDate ??
+    student.createdAt;
+
+  const baseType = student.hasPreviousExperience
+    ? 'LAST_GRADUATION'
+    : 'JOIN_DATE';
 
   return {
     id: student.id,
@@ -68,6 +86,17 @@ export const getStudentById = async (studentId: string) => {
     joinDate: student.joinDate
       ? student.joinDate.toLocaleDateString('pt-BR')
       : '-',
+    joinDateRaw: student.joinDate ? student.joinDate.toISOString() : null,
+    latestGraduationDate: latestGraduationDate
+      ? latestGraduationDate.toLocaleDateString('pt-BR')
+      : null,
+    latestGraduationDateRaw: latestGraduationDate
+      ? latestGraduationDate.toISOString()
+      : null,
+    baseDate: baseDate.toLocaleDateString('pt-BR'),
+    baseDateRaw: baseDate.toISOString(),
+    baseType,
+    hasPreviousExperience: student.hasPreviousExperience,
     status: student.status,
   };
 };

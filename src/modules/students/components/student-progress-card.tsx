@@ -1,6 +1,13 @@
 'use client';
 
 import { useTransition } from 'react';
+import {
+  CalendarClock,
+  CheckCircle2,
+  GraduationCap,
+  TriangleAlert,
+  Users,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { ProgressStatus } from '@/generated/prisma/client';
@@ -24,6 +31,31 @@ const statusLabelMap: Record<ProgressStatus, string> = {
   ON_TRACK: 'Dentro do prazo',
   ELIGIBLE: 'Elegível',
   POSTPONED: 'Postergado',
+};
+
+type ProgressInfoCardProps = {
+  title: string;
+  value: string | number;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const ProgressInfoCard = ({
+  title,
+  value,
+  icon: Icon,
+}: ProgressInfoCardProps) => {
+  return (
+    <div className='rounded-xl border border-white/10 bg-zinc-900 p-4'>
+      <div className='flex items-start justify-between gap-3'>
+        <div className='space-y-1'>
+          <p className='text-sm text-zinc-400'>{title}</p>
+          <p className='text-sm font-medium text-white'>{value}</p>
+        </div>
+
+        <Icon className='h-5 w-5 text-zinc-500' />
+      </div>
+    </div>
+  );
 };
 
 export const StudentProgressCard = ({
@@ -65,40 +97,35 @@ export const StudentProgressCard = ({
       <CardContent>
         {progress ? (
           <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
-            <div className='rounded-xl border border-white/10 bg-zinc-900 p-4'>
-              <p className='text-sm text-zinc-400'>Programa</p>
-              <p className='mt-1 text-sm text-white'>
-                {progress.program === 'KIDS' ? 'Kids' : 'Adulto'}
-              </p>
-            </div>
+            <ProgressInfoCard
+              title='Programa'
+              value={progress.program === 'KIDS' ? 'Kids' : 'Adulto'}
+              icon={GraduationCap}
+            />
 
-            <div className='rounded-xl border border-white/10 bg-zinc-900 p-4'>
-              <p className='text-sm text-zinc-400'>Elegibilidade estimada</p>
-              <p className='mt-1 text-sm text-white'>
-                {progress.projectedEligibilityDate}
-              </p>
-            </div>
+            <ProgressInfoCard
+              title='Elegibilidade estimada'
+              value={progress.projectedEligibilityDate}
+              icon={CalendarClock}
+            />
 
-            <div className='rounded-xl border border-white/10 bg-zinc-900 p-4'>
-              <p className='text-sm text-zinc-400'>Status</p>
-              <p className='mt-1 text-sm text-white'>
-                {statusLabelMap[progress.status]}
-              </p>
-            </div>
+            <ProgressInfoCard
+              title='Status'
+              value={statusLabelMap[progress.status]}
+              icon={CheckCircle2}
+            />
 
-            <div className='rounded-xl border border-white/10 bg-zinc-900 p-4'>
-              <p className='text-sm text-zinc-400'>Presenças</p>
-              <p className='mt-1 text-sm text-white'>
-                {progress.attendancesSincePromotion}
-              </p>
-            </div>
+            <ProgressInfoCard
+              title='Presenças'
+              value={progress.attendancesSincePromotion}
+              icon={Users}
+            />
 
-            <div className='rounded-xl border border-white/10 bg-zinc-900 p-4'>
-              <p className='text-sm text-zinc-400'>Faltas</p>
-              <p className='mt-1 text-sm text-white'>
-                {progress.absencesSincePromotion}
-              </p>
-            </div>
+            <ProgressInfoCard
+              title='Faltas'
+              value={progress.absencesSincePromotion}
+              icon={TriangleAlert}
+            />
           </div>
         ) : (
           <div className='rounded-xl border border-white/10 bg-zinc-900 p-4 text-sm text-zinc-400'>

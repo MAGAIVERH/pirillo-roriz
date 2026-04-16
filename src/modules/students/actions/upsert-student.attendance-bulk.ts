@@ -13,23 +13,26 @@ import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 import { calculateStudentProgress } from '../lib/calcule-student-progress';
 
-const createStudentManualAttendanceSchema = z.object({
+const upsertStudentAttendanceBulkSchema = z.object({
   studentId: z.string().min(1, 'Aluno inválido.'),
-  attendanceDate: z.string().min(1, 'Selecione a data da presença.'),
+  dates: z
+    .array(z.string().min(1))
+    .min(1, 'Selecione pelo menos uma data.')
+    .max(120, 'Selecione no máximo 120 datas por vez.'),
   status: z.nativeEnum(AttendanceStatus, {
     error: 'Selecione um status válido.',
   }),
   notes: z.string().optional(),
 });
 
-type CreateStudentManualAttendanceInput = z.infer<
-  typeof createStudentManualAttendanceSchema
+type UpsertStudentAttendanceBulkInput = z.infer<
+  typeof upsertStudentAttendanceBulkSchema
 >;
 
-export const createStudentManualAttendanceAction = async (
-  input: CreateStudentManualAttendanceInput,
+export const upsertStudentAttendanceBulkAction = async (
+  input: UpsertStudentAttendanceBulkInput,
 ) => {
-  const parsed = createStudentManualAttendanceSchema.safeParse(input);
+  const parsed = upsertStudentAttendanceBulkSchema.safeParse(input);
 
   if (!parsed.success) {
     return {
@@ -57,10 +60,6 @@ export const createStudentManualAttendanceAction = async (
         message: 'Aluno não encontrado.',
       };
     }
-
-    const attendanceDate = new Date(
-      `${parsed.data.attendanceDate}T12:00:00.000Z`,
-    );
 
     let manualClassType = await db.classType.findFirst({
       where: {
@@ -109,73 +108,79 @@ export const createStudentManualAttendanceAction = async (
       });
     }
 
-    let session = await db.classSession.findFirst({
-      where: {
-        classId: manualClass.id,
-        sessionDate: attendanceDate,
-      },
-      select: {
-        id: true,
-      },
-    });
+    const uniqueDates = [...new Set(parsed.data.dates)].sort();
 
-    if (!session) {
-      session = await db.classSession.create({
-        data: {
+    for (const date of uniqueDates) {
+      const attendanceDate = new Date(`${date}T12:00:00.000Z`);
+
+      let session = await db.classSession.findFirst({
+        where: {
           classId: manualClass.id,
           sessionDate: attendanceDate,
-          startsAt: attendanceDate,
-          endsAt: attendanceDate,
-          status: ClassSessionStatus.CLOSED,
-          notes: 'Presença histórica lançada manualmente',
         },
         select: {
           id: true,
         },
       });
-    }
 
-    const existingAttendance = await db.attendance.findFirst({
-      where: {
-        classSessionId: session.id,
-        studentId: student.id,
-      },
-      select: {
-        id: true,
-      },
-    });
+      if (!session) {
+        session = await db.classSession.create({
+          data: {
+            classId: manualClass.id,
+            sessionDate: attendanceDate,
+            startsAt: attendanceDate,
+            endsAt: attendanceDate,
+            status: ClassSessionStatus.CLOSED,
+            notes: 'Presença histórica lançada manualmente',
+          },
+          select: {
+            id: true,
+          },
+        });
+      }
 
-    if (existingAttendance) {
-      await db.attendance.update({
+      const existingAttendance = await db.attendance.findFirst({
         where: {
-          id: existingAttendance.id,
-        },
-        data: {
-          status: parsed.data.status,
-          source: AttendanceSource.ADMIN_ADJUSTMENT,
-          checkedInAt:
-            parsed.data.status === AttendanceStatus.PRESENT ||
-            parsed.data.status === AttendanceStatus.LATE
-              ? attendanceDate
-              : null,
-          notes: parsed.data.notes?.trim() || null,
-        },
-      });
-    } else {
-      await db.attendance.create({
-        data: {
           classSessionId: session.id,
           studentId: student.id,
-          status: parsed.data.status,
-          source: AttendanceSource.ADMIN_ADJUSTMENT,
-          checkedInAt:
-            parsed.data.status === AttendanceStatus.PRESENT ||
-            parsed.data.status === AttendanceStatus.LATE
-              ? attendanceDate
-              : null,
-          notes: parsed.data.notes?.trim() || null,
+        },
+        select: {
+          id: true,
         },
       });
+
+      if (existingAttendance) {
+        await db.attendance.update({
+          where: {
+            id: existingAttendance.id,
+          },
+          data: {
+            status: parsed.data.status,
+            source: AttendanceSource.ADMIN_ADJUSTMENT,
+            checkedInAt:
+              parsed.data.status === AttendanceStatus.PRESENT ||
+              parsed.data.status === AttendanceStatus.LATE
+                ? attendanceDate
+                : null,
+            notes: parsed.data.notes?.trim() || null,
+          },
+        });
+      } else {
+        await db.attendance.create({
+          data: {
+            classSessionId: session.id,
+            studentId: student.id,
+            status: parsed.data.status,
+            source: AttendanceSource.ADMIN_ADJUSTMENT,
+            checkedInAt:
+              parsed.data.status === AttendanceStatus.PRESENT ||
+              parsed.data.status === AttendanceStatus.LATE
+                ? attendanceDate
+                : null,
+            notes: parsed.data.notes?.trim() || null,
+          },
+        });
+      }
     }
 
     await calculateStudentProgress(student.id);
@@ -184,16 +189,14 @@ export const createStudentManualAttendanceAction = async (
 
     return {
       success: true,
-      message: existingAttendance
-        ? 'Presença atualizada com sucesso.'
-        : 'Presença lançada com sucesso.',
+      message: `${uniqueDates.length} dia(s) atualizado(s) com sucesso.`,
     };
   } catch (error) {
-    console.error('createStudentManualAttendanceAction error', error);
+    console.error('upsertStudentAttendanceBulkAction error', error);
 
     return {
       success: false,
-      message: 'Não foi possível salvar a presença.',
+      message: 'Não foi possível atualizar as presenças em lote.',
     };
   }
 };
