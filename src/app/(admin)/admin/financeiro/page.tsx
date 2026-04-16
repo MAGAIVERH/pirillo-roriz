@@ -8,9 +8,11 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { FinanceSummaryCards } from '@/modules/finance/components/finance-summary-cards';
+import type { FinanceSummaryItem } from '@/modules/finance/types/finance-summary';
 
-const financialOverview = [
+const financialOverview: FinanceSummaryItem[] = [
   {
     title: 'Receita do mês',
     value: 'R$ 18.450,00',
@@ -34,6 +36,39 @@ const financialOverview = [
     value: '8',
     description: 'Pagamentos que já passaram do vencimento.',
     icon: AlertTriangle,
+  },
+];
+
+const financialBlocks = [
+  {
+    title: 'Planos',
+    description:
+      'Estruture valores, periodicidade, desconto, taxa de matrícula e vínculo com os alunos.',
+  },
+  {
+    title: 'Mensalidades',
+    description:
+      'Acompanhe cobranças futuras, vencimentos do mês e alunos com pagamento regular.',
+  },
+  {
+    title: 'Cobranças',
+    description:
+      'Gerencie pagamentos pendentes, cobranças vencidas, reenvio e ações de recuperação.',
+  },
+  {
+    title: 'Pagamentos',
+    description:
+      'Tenha visão de pagamentos confirmados, manuais, recorrentes e histórico financeiro.',
+  },
+  {
+    title: 'Inadimplência',
+    description:
+      'Liste alunos em atraso, dias vencidos, valores pendentes e prioridade de cobrança.',
+  },
+  {
+    title: 'Relatórios financeiros',
+    description:
+      'Consolide receita, previsão, pendência e indicadores para decisão gerencial.',
   },
 ];
 
@@ -80,39 +115,6 @@ const financialRows = [
   },
 ];
 
-const financialBlocks = [
-  {
-    title: 'Planos',
-    description:
-      'Estruture valores, periodicidade, desconto, taxa de matrícula e vínculo com os alunos.',
-  },
-  {
-    title: 'Mensalidades',
-    description:
-      'Acompanhe cobranças futuras, vencimentos do mês e alunos com pagamento regular.',
-  },
-  {
-    title: 'Cobranças',
-    description:
-      'Gerencie pagamentos pendentes, cobranças vencidas, reenvio e ações de recuperação.',
-  },
-  {
-    title: 'Pagamentos',
-    description:
-      'Tenha visão de pagamentos confirmados, manuais, recorrentes e histórico financeiro.',
-  },
-  {
-    title: 'Inadimplência',
-    description:
-      'Liste alunos em atraso, dias vencidos, valores pendentes e prioridade de cobrança.',
-  },
-  {
-    title: 'Relatórios financeiros',
-    description:
-      'Consolide receita, previsão, pendência e indicadores para decisão gerencial.',
-  },
-];
-
 const getStatusClasses = (status: string) => {
   if (status === 'Pago') {
     return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400';
@@ -151,30 +153,7 @@ export default function AdminFinanceiroPage() {
         </div>
       </section>
 
-      <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-        {financialOverview.map(({ title, value, description, icon: Icon }) => (
-          <Card key={title} className='border-white/10 bg-zinc-950 text-white'>
-            <CardHeader className='flex flex-row items-start justify-between space-y-0'>
-              <div className='space-y-2'>
-                <CardTitle className='text-sm font-medium text-zinc-400'>
-                  {title}
-                </CardTitle>
-                <p className='text-3xl font-bold leading-none tracking-tight text-white'>
-                  {value}
-                </p>
-              </div>
-
-              <div className='flex h-11 w-11 items-center justify-center rounded-xl bg-red-600/15 text-red-500'>
-                <Icon className='h-5 w-5' />
-              </div>
-            </CardHeader>
-
-            <CardContent>
-              <p className='text-sm leading-6 text-zinc-400'>{description}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
+      <FinanceSummaryCards items={financialOverview} />
 
       <section className='grid gap-4 xl:grid-cols-2'>
         {financialBlocks.map((block) => (
