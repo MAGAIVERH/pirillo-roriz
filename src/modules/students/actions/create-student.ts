@@ -116,6 +116,8 @@ export const createStudentAction = async (
     const mappedStatus = statusMap[parsed.data.status];
     const mappedGoal = goalMap[parsed.data.goal];
     const now = new Date();
+    const hasPreviousExperience = parsed.data.studentHistoryType === 'existing';
+    const progressionStartDate = new Date(parsed.data.progressionStartDate);
 
     const student = await db.$transaction(async (tx) => {
       const createdStudent = await tx.student.create({
@@ -128,9 +130,10 @@ export const createStudentAction = async (
           phone: normalizedPhone,
           gender: mappedGender,
           status: mappedStatus,
-          joinDate: now,
+          joinDate: progressionStartDate,
           leadSourceId: leadSource.id,
           goal: mappedGoal,
+          hasPreviousExperience,
           notes: parsed.data.notes || null,
         },
       });
@@ -139,7 +142,7 @@ export const createStudentAction = async (
         data: {
           studentId: createdStudent.id,
           currentBeltId: belt.id,
-          promotedAt: now,
+          promotedAt: progressionStartDate,
         },
       });
 

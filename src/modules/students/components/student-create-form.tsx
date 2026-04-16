@@ -7,7 +7,7 @@ import { ptBR } from 'date-fns/locale';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -99,8 +99,15 @@ export const StudentCreateForm = ({
       mainClassId: '',
       goal: '',
       leadSourceId: '',
+      studentHistoryType: 'new',
+      progressionStartDate: new Date(),
       notes: '',
     },
+  });
+
+  const studentHistoryType = useWatch({
+    control: form.control,
+    name: 'studentHistoryType',
   });
 
   const onSubmit = (values: CreateStudentSchema) => {
@@ -126,6 +133,8 @@ export const StudentCreateForm = ({
         mainClassId: '',
         goal: '',
         leadSourceId: '',
+        studentHistoryType: 'new',
+        progressionStartDate: new Date(),
         notes: '',
       });
 
@@ -429,6 +438,105 @@ export const StudentCreateForm = ({
             />
 
             <Controller
+              name='studentHistoryType'
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <div className='space-y-2'>
+                  <Label>Histórico do aluno</Label>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger
+                      className='border-white/10 bg-zinc-900 text-white'
+                      aria-invalid={fieldState.invalid}
+                    >
+                      <SelectValue placeholder='Selecione o tipo' />
+                    </SelectTrigger>
+                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                      <SelectItem value='new'>Aluno novo</SelectItem>
+                      <SelectItem value='existing'>
+                        Aluno antigo / graduado
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {fieldState.error ? (
+                    <p className='text-sm text-red-400'>
+                      {fieldState.error.message}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            />
+
+            <Controller
+              name='progressionStartDate'
+              control={form.control}
+              render={({ field, fieldState }) => {
+                return (
+                  <div className='space-y-2'>
+                    <Label>
+                      {studentHistoryType === 'existing'
+                        ? 'Data da última graduação'
+                        : 'Data de início'}
+                    </Label>
+
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className={cn(
+                            'h-10 w-full justify-between border-white/10 bg-zinc-900 text-left font-normal text-white hover:bg-zinc-800 hover:text-white',
+                            !field.value && 'text-zinc-500',
+                          )}
+                          aria-invalid={fieldState.invalid}
+                        >
+                          {field.value ? (
+                            format(field.value, 'dd/MM/yyyy', {
+                              locale: ptBR,
+                            })
+                          ) : (
+                            <span>dd/mm/aaaa</span>
+                          )}
+
+                          <CalendarIcon className='h-4 w-4 text-white' />
+                        </Button>
+                      </PopoverTrigger>
+
+                      <PopoverContent
+                        align='start'
+                        className='z-50 w-auto border-white/10 bg-zinc-950 p-0 text-white'
+                      >
+                        <Calendar
+                          mode='single'
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          locale={ptBR}
+                          captionLayout='dropdown'
+                          startMonth={new Date(1940, 0)}
+                          endMonth={new Date()}
+                          defaultMonth={field.value ?? new Date()}
+                          initialFocus
+                          className='rounded-md bg-zinc-950 text-white'
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    <p className='text-sm text-zinc-500'>
+                      {studentHistoryType === 'existing'
+                        ? 'Use a data da última graduação para liberar o retroativo da faixa atual.'
+                        : 'Use a data em que o aluno iniciou na faixa atual.'}
+                    </p>
+
+                    {fieldState.error ? (
+                      <p className='text-sm text-red-400'>
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              }}
+            />
+
+            <Controller
               name='goal'
               control={form.control}
               render={({ field, fieldState }) => (
@@ -535,6 +643,8 @@ export const StudentCreateForm = ({
                 mainClassId: '',
                 goal: '',
                 leadSourceId: '',
+                studentHistoryType: 'new',
+                progressionStartDate: new Date(),
                 notes: '',
               });
             }}
