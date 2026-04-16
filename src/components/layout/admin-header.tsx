@@ -1,18 +1,26 @@
+'use client';
+
 import { Bell, Search } from 'lucide-react';
+
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export const AdminHeader = () => {
   return (
     <header className='border-b border-white/10 bg-black/70 backdrop-blur'>
-      <div className='flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8'>
-        <div>
-          <p className='text-sm text-zinc-400'>Área administrativa</p>
-          <h1 className='text-xl font-semibold text-white'>
-            Gestão da academia
-          </h1>
+      <div className='flex h-23 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8'>
+        <div className='flex items-center gap-3'>
+          <SidebarTrigger className='h-11 w-11 rounded-xl border border-white/10 bg-zinc-950 text-zinc-300 transition hover:bg-zinc-900 hover:text-white' />
+
+          <div>
+            <p className='text-sm text-zinc-400'>Área administrativa</p>
+            <h1 className='text-xl font-semibold text-white'>
+              Gestão da academia
+            </h1>
+          </div>
         </div>
 
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-          <div className='flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-zinc-950 px-3 text-zinc-400 sm:w-[320px]'>
+        <div className='hidden items-center gap-3 sm:flex'>
+          <div className='flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-zinc-950 px-3 text-zinc-400 lg:w-[320px]'>
             <Search className='h-4 w-4' />
             <span className='text-sm'>Buscar alunos, turmas ou pedidos...</span>
           </div>

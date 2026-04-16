@@ -4,7 +4,7 @@ import { Toaster } from 'sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Pirillo Roriz',
+  title: 'Jiu Jitsu',
   description: 'Plataforma de gestão para academia de jiu-jitsu',
 };
 
@@ -15,7 +15,7 @@ type RootLayoutProps = Readonly<{
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang='pt-BR'>
-      <body>
+      <body suppressHydrationWarning>
         {children}
 
         <Toaster
