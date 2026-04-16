@@ -1,6 +1,10 @@
 import {
   AlertTriangle,
   BadgeDollarSign,
+  CreditCard,
+  FileBarChart2,
+  PlusCircle,
+  Receipt,
   TrendingUp,
   Wallet,
 } from 'lucide-react';
@@ -34,36 +38,36 @@ export const financialOverview: FinanceSummaryItem[] = [
   },
 ];
 
-export const financialBlocks = [
+export const financeQuickActions = [
   {
     title: 'Planos',
-    description:
-      'Estruture valores, periodicidade, desconto, taxa de matrícula e vínculo com os alunos.',
+    description: 'Valores, periodicidade e vínculo com alunos.',
+    icon: Receipt,
   },
   {
     title: 'Mensalidades',
-    description:
-      'Acompanhe cobranças futuras, vencimentos do mês e alunos com pagamento regular.',
+    description: 'Controle do mês, vencimentos e recorrência.',
+    icon: CreditCard,
   },
   {
     title: 'Cobranças',
-    description:
-      'Gerencie pagamentos pendentes, cobranças vencidas, reenvio e ações de recuperação.',
+    description: 'Pendências, vencidos e recuperação.',
+    icon: PlusCircle,
   },
   {
     title: 'Pagamentos',
-    description:
-      'Tenha visão de pagamentos confirmados, manuais, recorrentes e histórico financeiro.',
+    description: 'Registro manual, confirmações e histórico.',
+    icon: Wallet,
   },
   {
     title: 'Inadimplência',
-    description:
-      'Liste alunos em atraso, dias vencidos, valores pendentes e prioridade de cobrança.',
+    description: 'Atrasos, dias vencidos e prioridade de cobrança.',
+    icon: AlertTriangle,
   },
   {
-    title: 'Relatórios financeiros',
-    description:
-      'Consolide receita, previsão, pendência e indicadores para decisão gerencial.',
+    title: 'Relatórios',
+    description: 'Receita, previsão e indicadores financeiros.',
+    icon: FileBarChart2,
   },
 ];
 
