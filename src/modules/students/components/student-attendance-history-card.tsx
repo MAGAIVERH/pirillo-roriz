@@ -673,16 +673,17 @@ export const StudentAttendanceHistoryCard = ({
                 </div>
 
                 <div className='mt-4 flex gap-3'>
-                  <div className='shrink-0 rounded-md bg-zinc-950/80 pr-2 text-[11px] text-zinc-500'>
-                    <div className='mb-5.5 h-4' />
-                    <div className='flex flex-col gap-2'>
-                      <span className='h-4'>D</span>
-                      <span className='h-4'>S</span>
-                      <span className='h-4'>T</span>
-                      <span className='h-4'>Q</span>
-                      <span className='h-4'>Q</span>
-                      <span className='h-4'>S</span>
-                      <span className='h-4'>S</span>
+                  <div className='shrink-0 pr-2 text-[11px] text-zinc-500'>
+                    <div className='mb-2 h-4' />
+
+                    <div className='grid auto-rows-[16px] gap-2'>
+                      <span className='flex h-4 items-center'>D</span>
+                      <span className='flex h-4 items-center'>S</span>
+                      <span className='flex h-4 items-center'>T</span>
+                      <span className='flex h-4 items-center'>Q</span>
+                      <span className='flex h-4 items-center'>Q</span>
+                      <span className='flex h-4 items-center'>S</span>
+                      <span className='flex h-4 items-center'>S</span>
                     </div>
                   </div>
 
