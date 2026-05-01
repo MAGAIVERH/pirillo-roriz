@@ -54,6 +54,12 @@ export const getStudentById = async (studentId: string) => {
         },
         take: 1,
       },
+      subscriptions: {
+        where: { status: 'ACTIVE' },
+        include: { plan: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
     },
   });
 
@@ -98,5 +104,20 @@ export const getStudentById = async (studentId: string) => {
     baseType,
     hasPreviousExperience: student.hasPreviousExperience,
     status: student.status,
+    billingDueDay: student.billingDueDay,
+    activeSubscription: student.subscriptions[0]
+      ? {
+          planName: student.subscriptions[0].plan.name,
+          priceInCents: student.subscriptions[0].priceInCents,
+          priceLabel: (
+            student.subscriptions[0].priceInCents / 100
+          ).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          }),
+          billingDueDay: student.subscriptions[0].billingDueDay,
+          status: student.subscriptions[0].status,
+        }
+      : null,
   };
 };

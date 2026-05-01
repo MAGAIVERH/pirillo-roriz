@@ -16,10 +16,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { StudentAttendanceHistoryCard } from '@/modules/students/components/student-attendance-history-card';
 import { StudentProgressCard } from '@/modules/students/components/student-progress-card';
 import { StudentStatusBadge } from '@/modules/students/components/student-status-badge';
+import { StudentFinanceCard } from '@/modules/finance/components/student-finance-card';
 
 import { getStudentAttendanceHistory } from '@/modules/students/queries/get-student-attendance-history';
 import { getStudentById } from '@/modules/students/queries/get-student-by-id';
 import { calculateStudentProgress } from '@/modules/students/lib/calcule-student-progress';
+import { getStudentFinanceSummary } from '@/modules/finance/queries/get-student-finance-summary';
 
 type AdminAlunoDetailsPageProps = {
   params: Promise<{
@@ -97,10 +99,11 @@ export default async function AdminAlunoDetailsPage({
 }: AdminAlunoDetailsPageProps) {
   const { alunosId } = await params;
 
-  const [student, attendances, progressResult] = await Promise.all([
+  const [student, attendances, progressResult, finance] = await Promise.all([
     getStudentById(alunosId),
     getStudentAttendanceHistory(alunosId),
     calculateStudentProgress(alunosId),
+    getStudentFinanceSummary(alunosId),
   ]);
 
   const progress =
@@ -125,6 +128,7 @@ export default async function AdminAlunoDetailsPage({
 
   return (
     <div className='space-y-6'>
+      {/* Cabeçalho */}
       <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
           <div className='space-y-3'>
@@ -159,6 +163,7 @@ export default async function AdminAlunoDetailsPage({
         </div>
       </section>
 
+      {/* Cards de info principal */}
       <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
         <DetailInfoCard title='Email' value={student.email} icon={Mail} />
         <DetailInfoCard
@@ -178,6 +183,7 @@ export default async function AdminAlunoDetailsPage({
         />
       </section>
 
+      {/* Cards de info secundária */}
       <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
         <DetailInfoCard title='Turma' value={student.className} icon={Users} />
         <DetailInfoCard
@@ -201,8 +207,17 @@ export default async function AdminAlunoDetailsPage({
         />
       </section>
 
+      {/* Card financeiro */}
+      <StudentFinanceCard
+        studentName={student.fullName}
+        billingDueDay={student.billingDueDay}
+        finance={finance}
+      />
+
+      {/* Progresso de graduação */}
       <StudentProgressCard studentId={student.id} progress={progress} />
 
+      {/* Histórico de presença */}
       <StudentAttendanceHistoryCard
         studentId={student.id}
         baseDateIso={student.baseDateRaw.split('T')[0]}

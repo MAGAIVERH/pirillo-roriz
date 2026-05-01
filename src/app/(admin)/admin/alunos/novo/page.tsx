@@ -3,7 +3,7 @@ import { StudentCreateForm } from '@/modules/students/components/student-create-
 import { getStudentFormOptions } from '@/modules/students/queries/get-student-form-options';
 
 export default async function AdminNovoAlunoPage() {
-  const { belts, classes, leadSources } = await getStudentFormOptions();
+  const { belts, classes, leadSources, plans } = await getStudentFormOptions();
 
   return (
     <div className='space-y-6'>
@@ -27,6 +27,7 @@ export default async function AdminNovoAlunoPage() {
         belts={belts}
         classes={classes}
         leadSources={leadSources}
+        plans={plans}
       />
     </div>
   );

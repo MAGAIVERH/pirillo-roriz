@@ -31,6 +31,13 @@ export const createStudentSchema = z
     progressionStartDate: z.date({
       error: 'Selecione a data de início ou da última graduação.',
     }),
+    billingDueDay: z
+      .number({ error: 'Informe o dia de vencimento.' })
+      .int()
+      .min(1, 'O dia mínimo é 1.')
+      .max(28, 'O dia máximo é 28 para cobrir todos os meses.'),
+    // Plano opcional — se informado, cria subscription + invoice automaticamente
+    planId: z.string().optional(),
     notes: z.string().optional(),
   })
   .superRefine((data, ctx) => {

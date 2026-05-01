@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -53,6 +53,12 @@ type StudentCreateFormProps = {
     id: string;
     name: string;
   }[];
+  plans: {
+    id: string;
+    name: string;
+    priceInCents: number;
+    billingCycle: string;
+  }[];
 };
 
 const formatPhone = (value: string) => {
@@ -82,6 +88,7 @@ export const StudentCreateForm = ({
   belts,
   classes,
   leadSources,
+  plans,
 }: StudentCreateFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -96,6 +103,7 @@ export const StudentCreateForm = ({
       gender: '',
       status: '',
       beltId: '',
+      planId: '',
       mainClassId: '',
       goal: '',
       leadSourceId: '',
@@ -109,6 +117,18 @@ export const StudentCreateForm = ({
     control: form.control,
     name: 'studentHistoryType',
   });
+
+  const progressionStartDate = useWatch({
+    control: form.control,
+    name: 'progressionStartDate',
+  });
+
+  // Pré-preenche o dia de vencimento quando a data base muda
+  useEffect(() => {
+    if (progressionStartDate) {
+      form.setValue('billingDueDay', progressionStartDate.getDate());
+    }
+  }, [progressionStartDate, form]);
 
   const onSubmit = (values: CreateStudentSchema) => {
     startTransition(async () => {
@@ -135,6 +155,7 @@ export const StudentCreateForm = ({
         leadSourceId: '',
         studentHistoryType: 'new',
         progressionStartDate: new Date(),
+        billingDueDay: new Date().getDate(),
         notes: '',
       });
 
@@ -537,6 +558,76 @@ export const StudentCreateForm = ({
             />
 
             <Controller
+              name='billingDueDay'
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <div className='space-y-2'>
+                  <Label htmlFor='billingDueDay'>
+                    Dia de vencimento da mensalidade
+                  </Label>
+                  <Input
+                    id='billingDueDay'
+                    type='number'
+                    min={1}
+                    max={28}
+                    placeholder='Ex: 10'
+                    className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+                    aria-invalid={fieldState.invalid}
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                  <p className='text-sm text-zinc-500'>
+                    Dia do mês em que a mensalidade vence. Máximo 28 para cobrir
+                    todos os meses.
+                  </p>
+                  {fieldState.error ? (
+                    <p className='text-sm text-red-400'>
+                      {fieldState.error.message}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            />
+
+            <Controller
+              name='planId'
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <div className='space-y-2'>
+                  <Label>Plano de mensalidade</Label>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger
+                      className='border-white/10 bg-zinc-900 text-white'
+                      aria-invalid={fieldState.invalid}
+                    >
+                      <SelectValue placeholder='Selecione um plano (opcional)' />
+                    </SelectTrigger>
+                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                      {plans.map((plan) => (
+                        <SelectItem key={plan.id} value={plan.id}>
+                          {plan.name} —{' '}
+                          {(plan.priceInCents / 100).toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          })}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className='text-sm text-zinc-500'>
+                    Opcional. Se selecionado, a primeira fatura será gerada
+                    automaticamente.
+                  </p>
+                  {fieldState.error ? (
+                    <p className='text-sm text-red-400'>
+                      {fieldState.error.message}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            />
+
+            <Controller
               name='goal'
               control={form.control}
               render={({ field, fieldState }) => (
@@ -645,6 +736,7 @@ export const StudentCreateForm = ({
                 leadSourceId: '',
                 studentHistoryType: 'new',
                 progressionStartDate: new Date(),
+                billingDueDay: new Date().getDate(),
                 notes: '',
               });
             }}

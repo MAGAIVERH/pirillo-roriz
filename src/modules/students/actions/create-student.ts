@@ -41,6 +41,24 @@ const goalMap: Record<string, StudentGoal> = {
   hobby: StudentGoal.HOBBY,
 };
 
+/**
+ * Calcula a data de vencimento da primeira fatura.
+ * Usa o mês atual e o dia de vencimento do aluno.
+ * Se o dia já passou no mês atual, gera para o próximo mês.
+ */
+function calcFirstDueDate(billingDueDay: number): Date {
+  const now = new Date();
+  const today = now.getDate();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  // Se o dia de vencimento ainda não chegou este mês, vence este mês
+  // Se já passou, vence no próximo mês
+  const targetMonth = today <= billingDueDay ? month : month + 1;
+
+  return new Date(year, targetMonth, billingDueDay);
+}
+
 export const createStudentAction = async (
   input: CreateStudentSchema,
 ): Promise<CreateStudentActionResult> => {
@@ -48,25 +66,16 @@ export const createStudentAction = async (
 
   if (!parsed.success) {
     const firstError = parsed.error.issues[0]?.message ?? 'Dados inválidos.';
-    return {
-      success: false,
-      message: firstError,
-    };
+    return { success: false, message: firstError };
   }
 
   try {
     const academy = await getOrCreateDefaultAcademy();
 
-    const [belt, mainClass, leadSource] = await Promise.all([
+    const [belt, mainClass, leadSource, plan] = await Promise.all([
       db.belt.findFirst({
-        where: {
-          id: parsed.data.beltId,
-          academyId: academy.id,
-          active: true,
-        },
-        select: {
-          id: true,
-        },
+        where: { id: parsed.data.beltId, academyId: academy.id, active: true },
+        select: { id: true },
       }),
       db.class.findFirst({
         where: {
@@ -74,9 +83,7 @@ export const createStudentAction = async (
           academyId: academy.id,
           active: true,
         },
-        select: {
-          id: true,
-        },
+        select: { id: true },
       }),
       db.leadSource.findFirst({
         where: {
@@ -84,32 +91,41 @@ export const createStudentAction = async (
           academyId: academy.id,
           active: true,
         },
-        select: {
-          id: true,
-        },
+        select: { id: true },
       }),
+      // Busca plano apenas se foi informado
+      parsed.data.planId
+        ? db.plan.findFirst({
+            where: {
+              id: parsed.data.planId,
+              academyId: academy.id,
+              active: true,
+            },
+            select: { id: true, priceInCents: true, name: true },
+          })
+        : Promise.resolve(null),
     ]);
 
-    if (!belt) {
+    if (!belt)
       return {
         success: false,
         message: 'Não foi possível localizar a faixa inicial.',
       };
-    }
-
-    if (!mainClass) {
+    if (!mainClass)
       return {
         success: false,
         message: 'Não foi possível localizar a turma principal.',
       };
-    }
-
-    if (!leadSource) {
+    if (!leadSource)
       return {
         success: false,
         message: 'Não foi possível localizar a origem do aluno.',
       };
-    }
+    if (parsed.data.planId && !plan)
+      return {
+        success: false,
+        message: 'Não foi possível localizar o plano selecionado.',
+      };
 
     const normalizedPhone = parsed.data.phone.replace(/\D/g, '');
     const mappedGender = genderMap[parsed.data.gender];
@@ -120,6 +136,7 @@ export const createStudentAction = async (
     const progressionStartDate = new Date(parsed.data.progressionStartDate);
 
     const student = await db.$transaction(async (tx) => {
+      // 1. Cria o aluno
       const createdStudent = await tx.student.create({
         data: {
           academyId: academy.id,
@@ -134,10 +151,12 @@ export const createStudentAction = async (
           leadSourceId: leadSource.id,
           goal: mappedGoal,
           hasPreviousExperience,
+          billingDueDay: parsed.data.billingDueDay,
           notes: parsed.data.notes || null,
         },
       });
 
+      // 2. Cria status da faixa
       await tx.studentBeltStatus.create({
         data: {
           studentId: createdStudent.id,
@@ -146,6 +165,7 @@ export const createStudentAction = async (
         },
       });
 
+      // 3. Registra histórico de status
       await tx.studentStatusHistory.create({
         data: {
           studentId: createdStudent.id,
@@ -154,6 +174,7 @@ export const createStudentAction = async (
         },
       });
 
+      // 4. Cria matrícula na turma (se não for lead)
       if (mappedStatus !== StudentStatus.LEAD) {
         await tx.enrollment.create({
           data: {
@@ -165,20 +186,52 @@ export const createStudentAction = async (
         });
       }
 
+      // 5. Se plano foi selecionado → cria subscription + primeira invoice
+      if (plan) {
+        const dueDate = calcFirstDueDate(parsed.data.billingDueDay);
+
+        const subscription = await tx.studentSubscription.create({
+          data: {
+            studentId: createdStudent.id,
+            planId: plan.id,
+            startsAt: progressionStartDate,
+            status: 'ACTIVE',
+            priceInCents: plan.priceInCents,
+            discountInCents: 0,
+            billingDueDay: parsed.data.billingDueDay,
+          },
+        });
+
+        await tx.invoice.create({
+          data: {
+            academyId: academy.id,
+            studentId: createdStudent.id,
+            subscriptionId: subscription.id,
+            description: `Mensalidade — ${plan.name}`,
+            amountInCents: plan.priceInCents,
+            discountInCents: 0,
+            fineInCents: 0,
+            dueDate,
+            status: 'PENDING',
+          },
+        });
+      }
+
       return createdStudent;
     });
 
     revalidatePath('/admin/alunos');
-    revalidatePath('/admin/alunos/novo');
+    revalidatePath('/admin/financeiro');
 
     return {
       success: true,
-      message: 'Aluno salvo com sucesso no banco.',
+      message: plan
+        ? 'Aluno salvo e plano vinculado com sucesso.'
+        : 'Aluno salvo com sucesso no banco.',
       studentId: student.id,
     };
   } catch (error) {
     console.error('createStudentAction error', error);
-
     return {
       success: false,
       message: 'Não foi possível salvar o aluno no banco.',

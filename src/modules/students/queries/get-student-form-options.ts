@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 export const getStudentFormOptions = async () => {
   const academy = await getOrCreateDefaultAcademy();
 
-  const [belts, classes, leadSources] = await Promise.all([
+  const [belts, classes, leadSources, plans] = await Promise.all([
     db.belt.findMany({
       where: {
         academyId: academy.id,
@@ -46,11 +46,27 @@ export const getStudentFormOptions = async () => {
         name: true,
       },
     }),
+    db.plan.findMany({
+      where: {
+        academyId: academy.id,
+        active: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+      select: {
+        id: true,
+        name: true,
+        priceInCents: true,
+        billingCycle: true,
+      },
+    }),
   ]);
 
   return {
     belts,
     classes,
     leadSources,
+    plans,
   };
 };
