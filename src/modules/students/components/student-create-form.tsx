@@ -565,17 +565,26 @@ export const StudentCreateForm = ({
                   <Label htmlFor='billingDueDay'>
                     Dia de vencimento da mensalidade
                   </Label>
-                  <Input
-                    id='billingDueDay'
-                    type='number'
-                    min={1}
-                    max={28}
-                    placeholder='Ex: 10'
-                    className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
-                    aria-invalid={fieldState.invalid}
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
+                  <Select
+                    onValueChange={(val) => field.onChange(Number(val))}
+                    value={field.value ? String(field.value) : ''}
+                  >
+                    <SelectTrigger
+                      className='border-white/10 bg-zinc-900 text-white'
+                      aria-invalid={fieldState.invalid}
+                    >
+                      <SelectValue placeholder='Selecione o dia' />
+                    </SelectTrigger>
+                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(
+                        (day) => (
+                          <SelectItem key={day} value={String(day)}>
+                            Dia {day}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
                   <p className='text-sm text-zinc-500'>
                     Dia do mês em que a mensalidade vence. Máximo 28 para cobrir
                     todos os meses.

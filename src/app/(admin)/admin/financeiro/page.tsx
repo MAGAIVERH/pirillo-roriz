@@ -1,97 +1,157 @@
+import Link from 'next/link';
 import {
   AlertTriangle,
   BadgeDollarSign,
   CreditCard,
   FileBarChart2,
-  Plus,
   PlusCircle,
   Receipt,
+  ShieldCheck,
   TrendingUp,
   Wallet,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { FinanceReceivablesTable } from '@/modules/finance/components/finance-receivables-table';
-import { FinanceSummaryCards } from '@/modules/finance/components/finance-summary-cards';
 import {
-  getFinancialOverview,
+  type FinanceFilter,
   getFinanceReceivablesRows,
+  getFinanceTableMeta,
 } from '@/modules/finance/queries/finance-dashboard-queries';
+import {
+  getFinanceQuickStats,
+  getFinanceOverviewStats,
+} from '@/modules/finance/queries/get-finance-stats';
 
 // -------------------------------------------------------
-// Quick Actions — dados estáticos (só navegação)
+// Filtros válidos
 // -------------------------------------------------------
 
-const financeQuickActions = [
-  {
-    title: 'Planos',
-    description: 'Valores, periodicidade e vínculo com alunos.',
-    icon: Receipt,
-  },
-  {
-    title: 'Mensalidades',
-    description: 'Controle do mês, vencimentos e recorrência.',
-    icon: CreditCard,
-  },
-  {
-    title: 'Cobranças',
-    description: 'Pendências, vencidos e recuperação.',
-    icon: PlusCircle,
-  },
-  {
-    title: 'Pagamentos',
-    description: 'Registro manual, confirmações e histórico.',
-    icon: Wallet,
-  },
-  {
-    title: 'Inadimplência',
-    description: 'Atrasos, dias vencidos e prioridade de cobrança.',
-    icon: AlertTriangle,
-  },
-  {
-    title: 'Relatórios',
-    description: 'Receita, previsão e indicadores financeiros.',
-    icon: FileBarChart2,
-  },
+const VALID_FILTERS: FinanceFilter[] = [
+  'cobrancas',
+  'pagamentos',
+  'inadimplencia',
+  'mensalidades',
 ];
 
-// -------------------------------------------------------
-// Page — Server Component async
-// -------------------------------------------------------
+function isValidFilter(value: string | undefined): value is FinanceFilter {
+  return VALID_FILTERS.includes(value as FinanceFilter);
+}
 
-export default async function AdminFinanceiroPage() {
-  // Busca paralela para não bloquear uma query na outra
-  const [overview, receivablesRows] = await Promise.all([
-    getFinancialOverview(),
-    getFinanceReceivablesRows(),
+type AdminFinanceiroPageProps = {
+  searchParams: Promise<{ filtro?: string }>;
+};
+
+export default async function AdminFinanceiroPage({
+  searchParams,
+}: AdminFinanceiroPageProps) {
+  const { filtro } = await searchParams;
+  const activeFilter: FinanceFilter = isValidFilter(filtro)
+    ? filtro
+    : 'cobrancas';
+
+  const [overview, quickStats, receivablesRows] = await Promise.all([
+    getFinanceOverviewStats(),
+    getFinanceQuickStats(),
+    getFinanceReceivablesRows(activeFilter),
   ]);
 
-  // Monta o formato que FinanceSummaryCards espera
-  const financialOverview = [
+  const tableMeta = getFinanceTableMeta(activeFilter);
+
+  const metricCards = [
     {
-      title: 'Receita do mês',
-      value: overview.revenuePaidLabel,
-      description: 'Total recebido no mês atual.',
+      title: 'Receita realizada',
+      value: overview.revenueRealizedLabel,
+      description: 'Total efetivamente recebido no mês.',
       icon: TrendingUp,
+      highlight: false,
     },
     {
       title: 'Receita prevista',
       value: overview.revenueProjectedLabel,
-      description: 'Projeção com base nas cobranças ativas.',
+      description: 'Projeção total de faturas do mês.',
       icon: BadgeDollarSign,
+      highlight: false,
     },
     {
-      title: 'Em aberto',
-      value: overview.pendingLabel,
-      description: 'Valores pendentes de recebimento.',
-      icon: Wallet,
+      title: 'Adimplência',
+      value: overview.adimplencyLabel,
+      description: `${
+        overview.adimplencyRate >= 80 ? 'Boa taxa' : 'Atenção necessária'
+      } — % de faturas pagas no mês.`,
+      icon: ShieldCheck,
+      highlight: overview.adimplencyRate < 80,
     },
     {
-      title: 'Cobranças vencidas',
-      value: overview.overdueLabel,
-      description: 'Pagamentos que já passaram do vencimento.',
+      title: 'Em atraso',
+      value: overview.overdueAmountLabel,
+      description: 'Valor total de faturas vencidas sem pagamento.',
       icon: AlertTriangle,
+      highlight: overview.overdueAmountCents > 0,
+    },
+  ];
+
+  const quickActions = [
+    {
+      title: 'Planos',
+      description: 'Planos de cobrança disponíveis.',
+      counter: `${quickStats.activePlans} ativo${
+        quickStats.activePlans !== 1 ? 's' : ''
+      }`,
+      icon: Receipt,
+      href: '/admin/financeiro/planos',
+      filter: null,
+      alert: false,
+    },
+    {
+      title: 'Mensalidades',
+      description: 'Faturas com vencimento no mês atual.',
+      counter: `${quickStats.invoicesThisMonth} fatura${
+        quickStats.invoicesThisMonth !== 1 ? 's' : ''
+      }`,
+      icon: CreditCard,
+      href: '/admin/financeiro?filtro=mensalidades#tabela',
+      filter: 'mensalidades' as FinanceFilter,
+      alert: false,
+    },
+    {
+      title: 'Cobranças',
+      description: 'Faturas pendentes aguardando pagamento.',
+      counter: `${quickStats.pendingInvoices} pendente${
+        quickStats.pendingInvoices !== 1 ? 's' : ''
+      }`,
+      icon: PlusCircle,
+      href: '/admin/financeiro?filtro=cobrancas#tabela',
+      filter: 'cobrancas' as FinanceFilter,
+      alert: false,
+    },
+    {
+      title: 'Pagamentos',
+      description: 'Pagamentos confirmados no mês.',
+      counter: `${quickStats.paidThisMonth} pago${
+        quickStats.paidThisMonth !== 1 ? 's' : ''
+      }`,
+      icon: Wallet,
+      href: '/admin/financeiro?filtro=pagamentos#tabela',
+      filter: 'pagamentos' as FinanceFilter,
+      alert: false,
+    },
+    {
+      title: 'Inadimplência',
+      description: 'Faturas vencidas sem pagamento.',
+      counter: `${quickStats.overdueInvoices} em atraso`,
+      icon: AlertTriangle,
+      href: '/admin/financeiro?filtro=inadimplencia#tabela',
+      filter: 'inadimplencia' as FinanceFilter,
+      alert: quickStats.overdueInvoices > 0,
+    },
+    {
+      title: 'Relatórios',
+      description: 'Análises e indicadores financeiros detalhados.',
+      counter: 'Analytics',
+      icon: FileBarChart2,
+      href: '/admin/analytics',
+      filter: null,
+      alert: false,
     },
   ];
 
@@ -99,75 +159,139 @@ export default async function AdminFinanceiroPage() {
     <div className='space-y-6'>
       {/* Cabeçalho */}
       <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
-        <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
-          <div className='space-y-2'>
-            <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
-              Módulo
-            </p>
-
-            <h1 className='text-3xl font-bold tracking-tight'>Financeiro</h1>
-
-            <p className='max-w-4xl text-sm leading-7 text-zinc-400'>
-              Aqui o administrador acompanha receita, projeção financeira,
-              cobranças, mensalidades, inadimplência e a saúde financeira da
-              academia em um único lugar.
-            </p>
-          </div>
-
-          <div className='flex flex-col gap-3 sm:flex-row'>
-            <Button className='bg-red-600 text-white hover:bg-red-500'>
-              <Wallet className='mr-2 h-4 w-4' />
-              Registrar pagamento manual
-            </Button>
-
-            <Button
-              variant='outline'
-              className='border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
-            >
-              <Plus className='mr-2 h-4 w-4' />
-              Nova cobrança
-            </Button>
-          </div>
+        <div className='space-y-2'>
+          <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
+            Módulo
+          </p>
+          <h1 className='text-3xl font-bold tracking-tight'>Financeiro</h1>
+          <p className='max-w-4xl text-sm leading-7 text-zinc-400'>
+            Acompanhe receita, adimplência, cobranças e mensalidades da academia
+            em tempo real.
+          </p>
         </div>
       </section>
 
-      {/* Cards de resumo com dados reais */}
-      <FinanceSummaryCards items={financialOverview} />
+      {/* Cards de métricas */}
+      <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        {metricCards.map(
+          ({ title, value, description, icon: Icon, highlight }) => (
+            <div
+              key={title}
+              className={`rounded-2xl border p-5 ${
+                highlight
+                  ? 'border-red-500/30 bg-red-500/5'
+                  : 'border-white/10 bg-zinc-950'
+              }`}
+            >
+              <div className='flex items-start justify-between'>
+                <p className='text-sm font-medium text-zinc-400'>{title}</p>
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                    highlight
+                      ? 'bg-red-600/20 text-red-400'
+                      : 'bg-red-600/15 text-red-500'
+                  }`}
+                >
+                  <Icon className='h-4 w-4' />
+                </div>
+              </div>
+              <p
+                className={`mt-3 text-3xl font-bold ${
+                  highlight ? 'text-red-400' : 'text-white'
+                }`}
+              >
+                {value}
+              </p>
+              <p className='mt-2 text-sm text-zinc-400'>{description}</p>
+            </div>
+          ),
+        )}
+      </section>
 
-      {/* Acesso rápido */}
+      {/* Acesso rápido com contadores reais */}
       <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
-        <div className='space-y-2'>
+        <div className='space-y-1'>
           <h2 className='text-2xl font-semibold text-white'>Acesso rápido</h2>
           <p className='text-sm text-zinc-400'>
-            Atalhos operacionais para as áreas principais do financeiro.
+            Selecione uma área para filtrar as informações abaixo.
           </p>
         </div>
 
         <div className='mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-          {financeQuickActions.map(({ title, description, icon: Icon }) => (
-            <Card
-              key={title}
-              className='border-white/10 bg-zinc-950 text-white transition hover:border-red-500/30 hover:bg-zinc-900'
-            >
-              <CardContent className='flex items-start gap-4 px-5 py-5'>
-                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-600/15 text-red-500'>
-                  <Icon className='h-5 w-5' />
-                </div>
+          {quickActions.map(
+            ({
+              title,
+              description,
+              counter,
+              icon: Icon,
+              href,
+              filter,
+              alert,
+            }) => {
+              const isActive = filter !== null && filter === activeFilter;
 
-                <div className='space-y-2'>
-                  <h3 className='text-lg font-semibold text-white'>{title}</h3>
-                  <p className='text-sm leading-6 text-zinc-400'>
-                    {description}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              return (
+                <Link
+                  key={title}
+                  href={href}
+                  className={`flex items-start gap-4 rounded-2xl border px-5 py-5 transition ${
+                    isActive
+                      ? 'border-red-500/50 bg-red-500/10'
+                      : alert
+                      ? 'border-red-500/20 bg-zinc-950 hover:border-red-500/40 hover:bg-zinc-900'
+                      : 'border-white/10 bg-zinc-950 hover:border-red-500/30 hover:bg-zinc-900'
+                  }`}
+                >
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                      isActive
+                        ? 'bg-red-600/30 text-red-400'
+                        : alert
+                        ? 'bg-red-600/20 text-red-400'
+                        : 'bg-red-600/15 text-red-500'
+                    }`}
+                  >
+                    <Icon className='h-5 w-5' />
+                  </div>
+
+                  <div className='min-w-0 flex-1'>
+                    <div className='flex items-center justify-between gap-2'>
+                      <h3
+                        className={`text-base font-semibold ${
+                          isActive ? 'text-red-400' : 'text-white'
+                        }`}
+                      >
+                        {title}
+                      </h3>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          isActive
+                            ? 'bg-red-500/20 text-red-400'
+                            : alert
+                            ? 'bg-red-500/15 text-red-400'
+                            : 'bg-zinc-800 text-zinc-400'
+                        }`}
+                      >
+                        {counter}
+                      </span>
+                    </div>
+                    <p className='mt-1 text-sm leading-5 text-zinc-400'>
+                      {description}
+                    </p>
+                  </div>
+                </Link>
+              );
+            },
+          )}
         </div>
       </section>
 
-      {/* Tabela de recebíveis com dados reais */}
-      <FinanceReceivablesTable rows={receivablesRows} />
+      {/* Tabela filtrada */}
+      <FinanceReceivablesTable
+        rows={receivablesRows}
+        title={tableMeta.title}
+        description={tableMeta.description}
+      />
     </div>
   );
 }

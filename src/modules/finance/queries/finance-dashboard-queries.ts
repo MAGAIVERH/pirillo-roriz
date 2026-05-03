@@ -28,12 +28,17 @@ function formatDate(date: Date): string {
 // Tipos exportados
 // -------------------------------------------------------
 
+export type FinanceFilter =
+  | 'cobrancas'
+  | 'pagamentos'
+  | 'inadimplencia'
+  | 'mensalidades';
+
 export type FinanceOverviewData = {
   revenuePaidCents: number;
   revenueProjectedCents: number;
   pendingCents: number;
   overdueCount: number;
-  // Formatados para exibição
   revenuePaidLabel: string;
   revenueProjectedLabel: string;
   pendingLabel: string;
@@ -48,34 +53,56 @@ export type FinanceReceivableRow = {
   paidInMonth: string;
   pending: string;
   status: 'Pago' | 'Vencido' | 'Pendente';
+  amountInCents: number;
 };
+
+export type FinanceTableMeta = {
+  title: string;
+  description: string;
+};
+
+// -------------------------------------------------------
+// Metadados da tabela por filtro
+// -------------------------------------------------------
+
+export function getFinanceTableMeta(filter: FinanceFilter): FinanceTableMeta {
+  const map: Record<FinanceFilter, FinanceTableMeta> = {
+    cobrancas: {
+      title: 'Cobranças pendentes',
+      description: 'Faturas pendentes e vencidas que precisam de atenção.',
+    },
+    pagamentos: {
+      title: 'Pagamentos do mês',
+      description: 'Faturas já pagas no mês atual.',
+    },
+    inadimplencia: {
+      title: 'Inadimplência',
+      description: 'Faturas vencidas ordenadas por prioridade de cobrança.',
+    },
+    mensalidades: {
+      title: 'Mensalidades do mês',
+      description: 'Todas as faturas com vencimento no mês atual.',
+    },
+  };
+
+  return map[filter];
+}
 
 // -------------------------------------------------------
 // Queries
 // -------------------------------------------------------
 
-/**
- * Retorna os 4 indicadores do topo da página financeira:
- * - Receita do mês (faturas pagas no mês atual)
- * - Receita prevista (total de faturas com vencimento no mês, independente de status)
- * - Em aberto (faturas PENDING com vencimento futuro)
- * - Cobranças vencidas (faturas OVERDUE ou PENDING com dueDate < hoje)
- */
 export async function getFinancialOverview(): Promise<FinanceOverviewData> {
   const academy = await getOrCreateDefaultAcademy();
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  // 1. Receita do mês: faturas pagas dentro do mês atual
   const paidInvoices = await db.invoice.findMany({
     where: {
       academyId: academy.id,
       status: 'PAID',
-      paidAt: {
-        gte: monthStart,
-        lte: monthEnd,
-      },
+      paidAt: { gte: monthStart, lte: monthEnd },
     },
     select: { amountInCents: true, discountInCents: true },
   });
@@ -85,15 +112,11 @@ export async function getFinancialOverview(): Promise<FinanceOverviewData> {
     0,
   );
 
-  // 2. Receita prevista: todas as faturas com vencimento no mês (exceto canceladas)
   const projectedInvoices = await db.invoice.findMany({
     where: {
       academyId: academy.id,
       status: { notIn: ['CANCELED', 'REFUNDED'] },
-      dueDate: {
-        gte: monthStart,
-        lte: monthEnd,
-      },
+      dueDate: { gte: monthStart, lte: monthEnd },
     },
     select: { amountInCents: true, discountInCents: true },
   });
@@ -103,7 +126,6 @@ export async function getFinancialOverview(): Promise<FinanceOverviewData> {
     0,
   );
 
-  // 3. Em aberto: faturas PENDING com vencimento no futuro
   const pendingInvoices = await db.invoice.findMany({
     where: {
       academyId: academy.id,
@@ -118,17 +140,10 @@ export async function getFinancialOverview(): Promise<FinanceOverviewData> {
     0,
   );
 
-  // 4. Cobranças vencidas: OVERDUE ou PENDING com dueDate no passado
   const overdueCount = await db.invoice.count({
     where: {
       academyId: academy.id,
-      OR: [
-        { status: 'OVERDUE' },
-        {
-          status: 'PENDING',
-          dueDate: { lt: now },
-        },
-      ],
+      OR: [{ status: 'OVERDUE' }, { status: 'PENDING', dueDate: { lt: now } }],
     },
   });
 
@@ -144,26 +159,40 @@ export async function getFinancialOverview(): Promise<FinanceOverviewData> {
   };
 }
 
-/**
- * Retorna as linhas da tabela de cobranças e recebimentos.
- * Busca as faturas com vencimento no mês atual, com dados do aluno e plano.
- */
-export async function getFinanceReceivablesRows(): Promise<
-  FinanceReceivableRow[]
-> {
+export async function getFinanceReceivablesRows(
+  filter: FinanceFilter = 'cobrancas',
+): Promise<FinanceReceivableRow[]> {
   const academy = await getOrCreateDefaultAcademy();
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
+  type InvoiceStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELED' | 'REFUNDED';
+
+  let statusFilter: InvoiceStatus[] = [];
+  let dueDateFilter: { gte?: Date; lte?: Date; lt?: Date } | undefined;
+  let orderBy: { dueDate: 'asc' | 'desc' } = { dueDate: 'asc' };
+
+  if (filter === 'cobrancas') {
+    statusFilter = ['PENDING', 'OVERDUE'];
+    dueDateFilter = { gte: monthStart, lte: monthEnd };
+  } else if (filter === 'pagamentos') {
+    statusFilter = ['PAID'];
+    dueDateFilter = { gte: monthStart, lte: monthEnd };
+  } else if (filter === 'inadimplencia') {
+    statusFilter = ['PENDING', 'OVERDUE'];
+    dueDateFilter = { lt: now };
+    orderBy = { dueDate: 'asc' };
+  } else if (filter === 'mensalidades') {
+    statusFilter = ['PENDING', 'PAID', 'OVERDUE'];
+    dueDateFilter = { gte: monthStart, lte: monthEnd };
+  }
+
   const invoices = await db.invoice.findMany({
     where: {
       academyId: academy.id,
-      status: { notIn: ['CANCELED', 'REFUNDED'] },
-      dueDate: {
-        gte: monthStart,
-        lte: monthEnd,
-      },
+      status: { in: statusFilter },
+      dueDate: dueDateFilter,
     },
     include: {
       student: {
@@ -178,21 +207,16 @@ export async function getFinanceReceivablesRows(): Promise<
         select: { amountInCents: true },
       },
     },
-    orderBy: { dueDate: 'asc' },
+    orderBy,
   });
 
   return invoices.map((inv) => {
     const studentName = inv.student.preferredName ?? inv.student.fullName;
-
     const planName = inv.subscription?.plan?.name ?? inv.description;
-
     const netAmount = inv.amountInCents - inv.discountInCents;
-
     const paidCents = inv.payments.reduce((sum, p) => sum + p.amountInCents, 0);
-
     const pendingCents = Math.max(0, netAmount - paidCents);
 
-    // Determina o status legível
     let status: FinanceReceivableRow['status'];
     if (inv.status === 'PAID') {
       status = 'Pago';
@@ -210,6 +234,7 @@ export async function getFinanceReceivablesRows(): Promise<
       paidInMonth: formatCurrency(paidCents),
       pending: formatCurrency(pendingCents),
       status,
+      amountInCents: netAmount,
     };
   });
 }

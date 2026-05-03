@@ -6,11 +6,11 @@ export type StudentFinanceSummary = {
   planName: string | null;
   priceLabel: string | null;
   billingDueDay: number | null;
-  // Fatura do mês atual
   currentInvoice: {
     id: string;
     status: 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELED' | 'REFUNDED';
     statusLabel: string;
+    amountInCents: number;
     amountLabel: string;
     dueDate: string;
     paidAt: string | null;
@@ -49,7 +49,6 @@ export async function getStudentFinanceSummary(
     999,
   );
 
-  // Busca assinatura ativa e fatura do mês em paralelo
   const [subscription, currentInvoice] = await Promise.all([
     db.studentSubscription.findFirst({
       where: {
@@ -84,6 +83,8 @@ export async function getStudentFinanceSummary(
           status: currentInvoice.status,
           statusLabel:
             statusLabelMap[currentInvoice.status] ?? currentInvoice.status,
+          amountInCents:
+            currentInvoice.amountInCents - currentInvoice.discountInCents,
           amountLabel: formatCurrency(
             currentInvoice.amountInCents - currentInvoice.discountInCents,
           ),

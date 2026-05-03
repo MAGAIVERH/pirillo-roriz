@@ -9,6 +9,7 @@ import {
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RegisterPaymentDialog } from '@/modules/finance/components/register-payment-dialog';
 import type { StudentFinanceSummary } from '@/modules/finance/queries/get-student-finance-summary';
 
 type StudentFinanceCardProps = {
@@ -38,19 +39,35 @@ export const StudentFinanceCard = ({
   billingDueDay,
   finance,
 }: StudentFinanceCardProps) => {
+  const showPaymentButton =
+    finance.currentInvoice &&
+    finance.currentInvoice.status !== 'PAID' &&
+    finance.currentInvoice.status !== 'CANCELED' &&
+    finance.currentInvoice.status !== 'REFUNDED';
+
   return (
     <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
-      <div className='space-y-2'>
-        <h2 className='text-2xl font-semibold text-white'>
-          Situação financeira
-        </h2>
-        <p className='text-sm text-zinc-400'>
-          Resumo financeiro de {studentName} no mês atual.
-        </p>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='space-y-1'>
+          <h2 className='text-2xl font-semibold text-white'>
+            Situação financeira
+          </h2>
+          <p className='text-sm text-zinc-400'>
+            Resumo financeiro de {studentName} no mês atual.
+          </p>
+        </div>
+
+        {showPaymentButton ? (
+          <RegisterPaymentDialog
+            invoiceId={finance.currentInvoice!.id}
+            amountInCents={finance.currentInvoice!.amountInCents ?? 0}
+            studentName={studentName}
+            dueDate={finance.currentInvoice!.dueDate}
+          />
+        ) : null}
       </div>
 
       <div className='mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-        {/* Plano */}
         <Card className='border-white/10 bg-zinc-900 text-white'>
           <CardHeader className='flex flex-row items-start justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium text-zinc-400'>
@@ -70,7 +87,6 @@ export const StudentFinanceCard = ({
           </CardContent>
         </Card>
 
-        {/* Dia de vencimento */}
         <Card className='border-white/10 bg-zinc-900 text-white'>
           <CardHeader className='flex flex-row items-start justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium text-zinc-400'>
@@ -88,7 +104,6 @@ export const StudentFinanceCard = ({
           </CardContent>
         </Card>
 
-        {/* Valor do mês */}
         <Card className='border-white/10 bg-zinc-900 text-white'>
           <CardHeader className='flex flex-row items-start justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium text-zinc-400'>
@@ -110,7 +125,6 @@ export const StudentFinanceCard = ({
           </CardContent>
         </Card>
 
-        {/* Status da fatura */}
         <Card className='border-white/10 bg-zinc-900 text-white'>
           <CardHeader className='flex flex-row items-start justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium text-zinc-400'>

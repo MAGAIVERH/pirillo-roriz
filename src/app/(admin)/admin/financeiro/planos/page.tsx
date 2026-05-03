@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Users } from 'lucide-react';
+import { ArrowLeft, Plus, Users } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,21 +10,31 @@ export default async function AdminFinanceiroPlanoPage() {
 
   return (
     <div className='space-y-6'>
-      {/* Cabeçalho */}
       <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
-          <div className='space-y-2'>
-            <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
-              Financeiro
-            </p>
+          <div className='space-y-3'>
+            <Button
+              asChild
+              variant='outline'
+              className='border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
+            >
+              <Link href='/admin/financeiro'>
+                <ArrowLeft className='mr-2 h-4 w-4' />
+                Voltar ao financeiro
+              </Link>
+            </Button>
 
-            <h1 className='text-3xl font-bold tracking-tight'>Planos</h1>
-
-            <p className='max-w-3xl text-sm leading-6 text-zinc-400'>
-              Gerencie os planos disponíveis na academia. Cada plano define o
-              valor, a periodicidade de cobrança e pode ser vinculado a um ou
-              mais alunos.
-            </p>
+            <div className='space-y-2'>
+              <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
+                Financeiro
+              </p>
+              <h1 className='text-3xl font-bold tracking-tight'>Planos</h1>
+              <p className='max-w-3xl text-sm leading-6 text-zinc-400'>
+                Gerencie os planos disponíveis na academia. Cada plano define o
+                valor, a periodicidade de cobrança e pode ser vinculado a um ou
+                mais alunos.
+              </p>
+            </div>
           </div>
 
           <Button
@@ -39,10 +49,8 @@ export default async function AdminFinanceiroPlanoPage() {
         </div>
       </section>
 
-      {/* Listagem */}
       <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
         <div className='overflow-hidden rounded-2xl border border-white/10'>
-          {/* Cabeçalho da tabela */}
           <div className='grid grid-cols-[1.5fr_1fr_1fr_1fr_120px] border-b border-white/10 bg-zinc-900 px-6 py-4 text-sm font-semibold uppercase tracking-wide text-zinc-400'>
             <span>Plano</span>
             <span>Valor</span>
@@ -51,7 +59,6 @@ export default async function AdminFinanceiroPlanoPage() {
             <span>Status</span>
           </div>
 
-          {/* Linhas */}
           <div className='divide-y divide-white/10'>
             {plans.length === 0 ? (
               <div className='px-6 py-12 text-center text-sm text-zinc-500'>
@@ -76,20 +83,16 @@ export default async function AdminFinanceiroPlanoPage() {
                       <p className='text-zinc-400'>{plan.description}</p>
                     )}
                   </div>
-
                   <span className='font-semibold text-white'>
                     {plan.priceLabel}
                   </span>
-
                   <span className='text-zinc-300'>
                     {plan.billingCycleLabel}
                   </span>
-
                   <div className='flex items-center gap-2 text-zinc-300'>
                     <Users className='h-4 w-4 text-zinc-500' />
                     {plan.activeSubscriptions}
                   </div>
-
                   <div>
                     <Badge
                       className={
