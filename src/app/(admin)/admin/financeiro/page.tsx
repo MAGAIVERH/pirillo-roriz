@@ -149,7 +149,7 @@ export default async function AdminFinanceiroPage({
       description: 'Análises e indicadores financeiros detalhados.',
       counter: 'Analytics',
       icon: FileBarChart2,
-      href: '/admin/analytics',
+      href: '/admin/financeiro/relatorios',
       filter: null,
       alert: false,
     },
