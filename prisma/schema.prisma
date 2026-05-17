@@ -239,6 +239,12 @@ enum PickupStatus {
   PICKED_UP
 }
 
+enum ProductAudience {
+  ALL
+  STUDENTS
+  INSTRUCTORS
+}
+
 enum AnnouncementType {
   INFO
   WARNING
@@ -528,6 +534,7 @@ model Instructor {
   classSessions     ClassSession[]
   graduationHistory GraduationHistory[]
   evaluations       StudentEvaluation[]
+  orders            Order[]
 
   @@index([academyId, active])
 }
@@ -975,9 +982,10 @@ model Product {
   stockQuantity Int      @default(0)
   imageUrl      String?
   active        Boolean  @default(true)
-  pickupOnly    Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  pickupOnly    Boolean         @default(true)
+  audience      ProductAudience @default(ALL)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   academy        Academy         @relation(fields: [academyId], references: [id], onDelete: Cascade)
   category       ProductCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
@@ -1007,7 +1015,8 @@ model StockMovement {
 model Order {
   id              String       @id @default(cuid())
   academyId       String
-  studentId       String
+  studentId       String?
+  instructorId    String?
   status          OrderStatus  @default(PENDING)
   subtotalInCents Int
   discountInCents Int          @default(0)
@@ -1019,12 +1028,14 @@ model Order {
   updatedAt       DateTime     @updatedAt
 
   academy       Academy        @relation(fields: [academyId], references: [id], onDelete: Cascade)
-  student       Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student       Student?       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  instructor    Instructor?    @relation(fields: [instructorId], references: [id], onDelete: Cascade)
   items         OrderItem[]
   pickupRecords PickupRecord[]
 
   @@index([academyId, status, createdAt])
   @@index([studentId, createdAt])
+  @@index([instructorId, createdAt])
 }
 
 model OrderItem {
