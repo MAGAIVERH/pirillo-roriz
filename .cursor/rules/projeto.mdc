@@ -1,0 +1,340 @@
+---
+description: Regras globais do projeto Pirillo Roriz — academia de Jiu-Jitsu
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# PIRILLO RORIZ — Sistema de gestão de academia de Jiu-Jitsu
+
+## Objetivo do projeto
+Plataforma administrativa completa para gestão de alunos, turmas, professores,
+graduação, financeiro, loja e analytics de uma academia de Jiu-Jitsu.
+Toda a interface é dark mode com identidade visual em vermelho (red-500/600).
+
+---
+
+## Stack tecnológica
+
+- Framework: Next.js 15 (App Router)
+- Linguagem: TypeScript — strict mode, sem any, sem erros de compilação
+- Banco / ORM: Prisma + Neon (PostgreSQL serverless)
+- Styling: Tailwind CSS v4
+- UI Components: shadcn/ui
+- Ícones: lucide-react
+- Validação: Zod
+- Notificações: Sonner (toast)
+- Gráficos: Recharts
+- Auth: NextAuth ou similar
+
+---
+
+## Estrutura de diretórios
+
+pirillo-roriz/
+  prisma/
+    migrations/
+    schema.prisma
+  public/
+  src/
+    app/
+      (admin)/admin/
+        alunos/
+          [alunoId]/
+          novo/
+          page.tsx
+        analytics/page.tsx
+        avisos/page.tsx
+        financeiro/
+          planos/
+          relatorios/
+          page.tsx
+        graduacao/regras/
+          [ruleId]/
+          nova/
+          page.tsx
+        loja/page.tsx
+        professores/
+          [instructorId]/
+          novo/
+          page.tsx
+        turmas/
+          layout.tsx
+          page.tsx
+      api/auth/[...all]/route.ts
+      globals.css
+      layout.tsx
+      page.tsx
+    components/        — componentes genéricos/globais reutilizáveis
+    generated/         — tipos gerados pelo Prisma
+    hooks/
+      use-mobile.ts
+    lib/
+      academy.ts       — getOrCreateDefaultAcademy()
+      db.ts            — instância do Prisma Client
+    modules/           — toda a lógica de negócio por domínio
+      classes/
+        actions/
+          create-class-complete.ts
+          create-class-schedule.ts
+          delete-class-schedule.ts
+          update-class-capacity.ts
+          update-class-settings.ts
+        components/
+          class-create-form.tsx
+          class-schedule-manager.tsx
+          classes-summary-cards.tsx
+          classes-table.tsx
+        queries/
+          get-class-by-id.ts
+          get-classes-list.ts
+          get-classes-summary.ts
+      finance/
+        actions/
+        components/
+        data/
+        queries/
+        schemas/
+        types/
+      graduation-rules/
+        actions/
+        components/
+        queries/
+        schema/
+      instructors/
+      store/
+        actions/
+          store-actions.ts
+        components/
+        data/
+        queries/
+        schema/
+        types/
+      students/
+  .env
+  .gitignore
+  AGENTS.md
+  CLAUDE.md
+  components.json
+  eslint.config.mjs
+  next-env.d.ts
+
+---
+
+## Design system — padrões visuais obrigatórios
+
+- Tema: Dark mode exclusivo — nunca light mode
+- Fundos: bg-zinc-950 · bg-zinc-900 · bg-zinc-800
+- Bordas: border-white/10 · border-white/5
+- Texto: text-white · text-zinc-400 · text-zinc-300 · text-zinc-500
+- Acento primário: red-500 · red-600 (botões, ícones, alertas, labels de módulo)
+- Acento positivo: emerald-400 (valores positivos, adimplência alta)
+- Acento atenção: amber-500
+- Arredondamento: rounded-2xl nos cards e seções · rounded-xl em inputs e itens internos
+
+Padrão de card:
+  className="rounded-2xl border border-white/10 bg-zinc-950 p-5"
+
+Padrão de card com alerta/destaque:
+  className="rounded-2xl border border-red-500/30 bg-red-500/5 p-5"
+
+Padrão de cabeçalho de módulo:
+  <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
+    <p className="text-sm font-medium uppercase tracking-[0.18em] text-red-500">Módulo</p>
+    <h1 className="text-3xl font-bold tracking-tight">Nome do Módulo</h1>
+    <p className="text-sm leading-7 text-zinc-400">Descrição do módulo.</p>
+  </section>
+
+Padrão de tabela:
+  <div className="overflow-hidden rounded-2xl border border-white/10">
+    <div className="grid grid-cols-[...] border-b border-white/10 bg-zinc-900 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+      {/* headers */}
+    </div>
+    <div className="divide-y divide-white/10">
+      {/* rows */}
+    </div>
+  </div>
+
+Padrão de ícone em card:
+  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-600/15 text-red-500">
+    <Icon className="h-4 w-4" />
+  </div>
+
+---
+
+## Regras de TypeScript — OBRIGATÓRIAS
+
+1. NUNCA use o tipo `any`. Substitua por `unknown`, tipos genéricos ou tipagens explícitas.
+2. NUNCA entregue arquivos com erros de TypeScript. Todo código deve compilar sem erros.
+3. NUNCA use `as any` ou `@ts-ignore` para suprimir erros. Resolva o erro real.
+4. Use `z.infer<typeof schema>` para derivar tipos de schemas Zod. Não duplique tipos manualmente.
+5. Prefira `type` a `interface` para tipos de dados simples.
+6. Sempre tipar props de componentes React com `type NomeProps = { ... }` antes do componente.
+7. Server Actions devem retornar tipos explícitos: Promise<{ success: boolean; message: string }>.
+8. Use `satisfies` quando quiser validar um objeto contra um tipo sem perder inferência literal.
+9. Enums do Prisma devem ser importados de `@/generated/prisma/client`, nunca redefinidos.
+10. Não use `Record<string, any>`. Especifique o valor: `Record<string, string>`, etc.
+
+---
+
+## Regras de arquitetura — OBRIGATÓRIAS
+
+1. Toda lógica de negócio vive em `src/modules/[dominio]/`. Nunca coloque queries ou actions em `app/` pages.
+2. Server Components buscam dados via funções em `modules/[dominio]/queries/` usando `db` e `getOrCreateDefaultAcademy()`.
+3. Mutações via Server Actions em `modules/[dominio]/actions/`. Fluxo obrigatório: validar com Zod → executar → revalidatePath → retornar { success, message }.
+4. Client Components ficam em `modules/[dominio]/components/` ou `components/`. Nunca busque dados diretamente — receba via props do Server Component pai.
+5. Schemas Zod ficam em `modules/[dominio]/schemas/`. Não repita schemas entre actions e components.
+6. Tipos específicos de um módulo ficam em `modules/[dominio]/types/`. Tipos globais em `src/types/`.
+7. Static/seed data ficam em `modules/[dominio]/data/`.
+8. Nunca use `fetch` diretamente nas pages — use as query functions do módulo.
+9. Pages do App Router devem ser `async` Server Components quando precisam de dados.
+10. `searchParams` em pages deve ser awaited: `const { filtro } = await searchParams`.
+
+---
+
+## Regras de componentes — OBRIGATÓRIAS
+
+1. Client Components usam `'use client'` na primeira linha, sem exceção.
+2. Mutações usam `useTransition` + `startTransition(async () => { ... })`. Use `isPending` para loading — nunca useState.
+3. Feedbacks ao usuário sempre via `toast` do Sonner. Nunca use `alert()`.
+4. Após mutation com redirecionamento: `router.push` + `router.refresh()` com setTimeout de ~400ms.
+5. Nunca use `<form>` com `action`. Use `<button type="button" onClick={handleSubmit}>` com useTransition.
+6. Inputs de tempo (HH:mm): formatar no onChange, normalizar no onBlur, validar com /^\d{2}:\d{2}$/ antes de submeter.
+7. Listas com `.map()` sempre com `key` única e estável (id, nunca índice).
+8. Formulários complexos: estado local por campo com tipos explícitos.
+
+---
+
+## Regras de banco de dados / Prisma — OBRIGATÓRIAS
+
+1. Sempre use `select` ou `include` explícito. Nunca retorne o objeto completo sem select.
+2. Toda query scoped ao `academyId` via `getOrCreateDefaultAcademy()` no início de cada função.
+3. Prefira `findFirst` com `where: { id, academyId }` a `findUnique` quando filtrar por academia.
+4. Use `Promise.all([...])` para queries paralelas — nunca sequencial.
+5. Erros em `try/catch` — retorne `{ success: false, message }`. Nunca lance o erro para o cliente.
+6. Valores monetários em centavos no banco. Conversão para display feita nas query functions, nunca nos componentes.
+
+---
+
+## Convenções de nomenclatura — OBRIGATÓRIAS
+
+Arquivos:              kebab-case              create-class-complete.ts
+Componentes React:     PascalCase              ClassCreateForm
+Funções de query:      camelCase + get         getClassById
+Server Actions:        camelCase + Action      createClassCompleteAction
+Schemas Zod:           camelCase + Schema      createClassCompleteSchema
+Tipos Zod:             PascalCase + z.infer    type CreateClassCompleteInput = z.infer<typeof schema>
+Constantes de array:   SCREAMING_SNAKE_CASE    VALID_FILTERS
+Imports:               sempre alias @/         @/modules/finance/queries/...
+Idioma do código:      inglês                  variáveis, funções, tipos, pastas
+Idioma da UI:          português               textos, labels, mensagens de erro
+
+---
+
+## Restrições absolutas — NUNCA faça
+
+- NUNCA use `any` em TypeScript — nem explícito, nem implícito
+- NUNCA entregue um arquivo com erro de TypeScript. Se não compilar, não entregue
+- NUNCA use `@ts-ignore` ou `@ts-expect-error` sem justificativa
+- NUNCA busque dados diretamente em Client Components — receba via props
+- NUNCA use `alert()`, `confirm()` ou `prompt()` — use Sonner toast
+- NUNCA use `<form action={...}>` para mutations — use useTransition
+- NUNCA use índice de array como `key` no `.map()`
+- NUNCA hardcode o `academyId` — sempre use `getOrCreateDefaultAcademy()`
+- NUNCA use `console.log` em produção — apenas `console.error` em catch de Server Actions
+- NUNCA retorne o objeto Prisma inteiro sem `select`
+- NUNCA use cores fora do design system (sem azuis, rosas ou outros acentos)
+- NUNCA use light mode — toda UI é dark mode zinc-950/900
+- NUNCA coloque lógica de negócio em `app/` pages
+- NUNCA duplique tipos já definidos em `modules/[dominio]/types/`
+
+---
+
+## Arquivos de referência — padrões a seguir
+
+ref-1: src/app/(admin)/admin/financeiro/page.tsx — server-component-page
+  Exemplo de page Server Component com searchParams validados, Promise.all,
+  arrays de configuração para cards e quick actions, estrutura:
+  cabeçalho → cards de métricas → acesso rápido → tabela.
+
+ref-2: src/app/(admin)/admin/financeiro/relatorios/page.tsx — server-component-page
+  Filtros via searchParams (month, year), gráficos Recharts, tabelas com Badge,
+  grid customizado sem shadcn Table.
+
+ref-3: src/modules/classes/components/class-create-form.tsx — client-component
+  useTransition para loading, estado local bem tipado, validação de tempo inline,
+  Sonner toast, router.push + router.refresh, lista dinâmica com add/remove.
+
+ref-4: src/modules/classes/actions/create-class-complete.ts — server-action
+  'use server', schema Zod + z.infer, safeParse + early return, getOrCreateDefaultAcademy(),
+  try/catch + console.error, revalidatePath, retorno tipado explícito.
+
+ref-5: src/modules/classes/queries/get-class-by-id.ts — query-function
+  getOrCreateDefaultAcademy(), findFirst com { id, academyId }, notFound(),
+  select/include explícito, transformação dos dados antes de retornar.
+
+ref-6: src/modules/finance/types/finance-summary.ts — types
+  Tipos específicos do domínio, LucideIcon importado de lucide-react,
+  exportações nomeadas com type keyword.
+
+ref-7: src/modules/finance/data/finance-data.ts — static-data
+  Arrays fortemente tipados com satisfies ou type annotation,
+  importação do tipo definido em types/, ícones do lucide-react.
+
+---
+
+## Padrão de resposta esperada
+
+1. Sempre informe o caminho completo no topo do bloco de código:
+   // src/modules/finance/queries/get-finance-stats.ts
+
+2. Ao criar um novo módulo, siga esta ordem:
+   types/ → schemas/ → queries/ → actions/ → components/ → page.tsx
+
+3. Ao criar uma page Server Component, inclua sempre:
+   - Cabeçalho com label "Módulo" em text-red-500 + h1 + descrição
+   - Promise.all para queries paralelas
+   - Props tipadas com `type NomeDaPageProps`
+
+4. Ao criar uma query function, inclua sempre:
+   - getOrCreateDefaultAcademy() no início
+   - select explícito no Prisma
+   - Transformação/formatação dos dados antes de retornar
+
+5. Ao criar um Server Action, inclua sempre:
+   - 'use server' no topo
+   - Schema Zod + safeParse + early return em falha
+   - try/catch com console.error e retorno { success: false, message }
+   - revalidatePath após mutação bem-sucedida
+
+6. Ao criar um Client Component com formulário, inclua sempre:
+   - useTransition para loading
+   - toast do Sonner para erro e sucesso
+   - router.push + router.refresh() após sucesso
+
+7. Entregue arquivos completos e funcionais — sem // TODO, sem partes faltando.
+
+---
+
+## Módulos do sistema
+
+alunos          — Cadastro, visualização, edição e histórico de alunos
+professores     — Cadastro e gestão de instrutores/professores
+turmas          — Turmas, tipos, horários, capacidade e matrículas
+financeiro      — Planos, mensalidades, cobranças, pagamentos, inadimplência e relatórios
+graduacao       — Regras de graduação, faixas, critérios e promoções
+loja            — Produtos, estoque, reservas e retirada presencial
+avisos          — Comunicados e notificações para alunos
+analytics       — Indicadores e métricas da academia
+
+---
+
+## Resumo rápido
+
+TypeScript     — Zero any, zero erros de compilação
+Arquitetura    — Lógica de negócio em modules/, nunca em app/
+Mutations      — Server Action + useTransition + Zod + revalidatePath
+UI             — Dark mode · zinc-950/900 · red-500/600 · rounded-2xl
+Monetário      — Centavos no banco, formatação na query function
+Imports        — Sempre @/ alias, nunca paths relativos com ../..
+Idioma         — Código em inglês, UI/mensagens em português
+Feedback       — Sempre Sonner toast, nunca alert()
