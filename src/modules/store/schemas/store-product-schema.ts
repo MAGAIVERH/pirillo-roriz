@@ -8,17 +8,16 @@ export const storeProductSchema = z.object({
 
   description: z.string().max(500).optional(),
 
-  // valor em centavos — o form converte antes de enviar
   priceCents: z
-    .number({ invalid_type_error: 'Informe um valor válido.' })
+    .number({ error: 'Informe um valor válido.' })
     .min(1, 'Valor deve ser maior que zero.'),
 
-  qty: z
-    .number({ invalid_type_error: 'Informe uma quantidade válida.' })
+  stockQuantity: z
+    .number({ error: 'Informe uma quantidade válida.' })
     .int()
     .min(0, 'Quantidade não pode ser negativa.'),
 
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: z.string().max(2_000_000).optional().or(z.literal('')),
 
   visibility: z.enum(['todos', 'alunos', 'professores']),
 });

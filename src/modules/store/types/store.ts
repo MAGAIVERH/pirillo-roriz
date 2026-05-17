@@ -1,36 +1,49 @@
 export type StoreVisibility = 'todos' | 'alunos' | 'professores';
 
-export type ReservationStatus = 'pending' | 'confirmed';
+export type StoreReservationStatus = 'pending' | 'fulfilled' | 'expired';
 
 export type ReservationUserType = 'aluno' | 'professor';
 
-export interface StoreProduct {
+export type StorePendingReserver = {
+  orderId: string;
+  name: string;
+  userType: ReservationUserType;
+  reservedAt: Date;
+  expiresAt: Date;
+};
+
+export type StoreProduct = {
   id: string;
   name: string;
   description: string | null;
   priceCents: number;
-  qty: number;
-  reserved: number;
+  stockQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
   imageUrl: string | null;
   visibility: StoreVisibility;
+  active: boolean;
+  pendingReservers: StorePendingReserver[];
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-export interface StoreReservation {
+export type StoreReservation = {
   id: string;
   productId: string;
   productName: string;
   userId: string;
   userName: string;
   userType: ReservationUserType;
-  status: ReservationStatus;
+  status: StoreReservationStatus;
+  quantity: number;
   createdAt: Date;
-}
+  expiresAt: Date;
+};
 
-export interface StoreOverviewStats {
+export type StoreOverviewStats = {
   totalProducts: number;
   totalStock: number;
   pendingReservations: number;
   outOfStock: number;
-}
+};
