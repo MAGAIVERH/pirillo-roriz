@@ -1,7 +1,4 @@
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import { AdminBackButton } from '@/components/layout/admin-back-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { InstructorDetailsForm } from '@/modules/instructors/components/instructor-details-form';
 import { InstructorStatusBadge } from '@/modules/instructors/components/instructor-status-badge';
@@ -20,31 +17,25 @@ export default async function AdminInstructorDetailsPage({
   const instructor = await getInstructorById(instructorId);
 
   return (
-    <div className='space-y-6'>
-      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
+    <div className='min-w-0 space-y-6'>
+      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-          <div className='space-y-3'>
-            <Button
-              asChild
-              variant='outline'
-              className='border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
-            >
-              <Link href='/admin/professores'>
-                <ArrowLeft className='mr-2 h-4 w-4' />
-                Voltar para professores
-              </Link>
-            </Button>
+          <div className='space-y-4'>
+            <AdminBackButton
+              href='/admin/professores'
+              label='Voltar para professores'
+            />
 
             <div className='space-y-2'>
               <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
                 Detalhes do professor
               </p>
 
-              <h1 className='text-3xl font-bold tracking-tight'>
+              <h1 className='text-2xl font-bold tracking-tight sm:text-3xl'>
                 {instructor.fullName}
               </h1>
 
-              <p className='max-w-3xl text-sm leading-6 text-zinc-400'>
+              <p className='max-w-3xl text-sm leading-6 break-words text-zinc-400'>
                 Aqui você gerencia os dados do professor, acompanha status e
                 prepara o vínculo operacional com as turmas da academia.
               </p>

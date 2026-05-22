@@ -1,7 +1,4 @@
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import { AdminBackButton } from '@/components/layout/admin-back-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { getGraduationRuleById } from '@/modules/graduation-rules/queries/get-graduation-rule-by-id';
@@ -20,27 +17,21 @@ export default async function AdminGraduationRuleDetailsPage({
   const { rule, belts } = await getGraduationRuleById(ruleId);
 
   return (
-    <div className='space-y-6'>
-      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
+    <div className='min-w-0 space-y-6'>
+      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-          <div className='space-y-3'>
-            <Button
-              asChild
-              variant='outline'
-              className='border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
-            >
-              <Link href='/admin/graduacao/regras'>
-                <ArrowLeft className='mr-2 h-4 w-4' />
-                Voltar para regras
-              </Link>
-            </Button>
+          <div className='space-y-4'>
+            <AdminBackButton
+              href='/admin/graduacao/regras'
+              label='Voltar para regras'
+            />
 
             <div className='space-y-2'>
               <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
                 Detalhes da regra
               </p>
 
-              <h1 className='text-3xl font-bold tracking-tight'>
+              <h1 className='text-2xl font-bold tracking-tight sm:text-3xl'>
                 {rule.currentStepLabel} → {rule.nextStepLabel}
               </h1>
 

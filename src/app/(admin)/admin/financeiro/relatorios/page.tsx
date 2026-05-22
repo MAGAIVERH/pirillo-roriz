@@ -1,15 +1,16 @@
 import Link from 'next/link';
 import {
-  ArrowLeft,
   BadgeDollarSign,
   FileText,
   ShieldCheck,
   TrendingUp,
 } from 'lucide-react';
 
+import { AdminBackButton } from '@/components/layout/admin-back-button';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { FinanceReportFilter } from '@/modules/finance/components/finance-report-filter';
+import { FinanceReportByPlanTable } from '@/modules/finance/components/finance-report-by-plan-table';
+import { FinanceReportPaymentsTable } from '@/modules/finance/components/finance-report-payments-table';
 import {
   FinanceAreaChart,
   FinanceDonutChart,
@@ -28,17 +29,6 @@ import {
 
 type AdminFinanceiroRelatoriosPageProps = {
   searchParams: Promise<{ month?: string; year?: string }>;
-};
-
-// -------------------------------------------------------
-// Helpers
-// -------------------------------------------------------
-
-const METHOD_COLORS: Record<string, string> = {
-  PIX: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
-  CASH: 'border-blue-500/20 bg-blue-500/10 text-blue-400',
-  CARD: 'border-purple-500/20 bg-purple-500/10 text-purple-400',
-  BANK_TRANSFER: 'border-amber-500/20 bg-amber-500/10 text-amber-400',
 };
 
 // -------------------------------------------------------
@@ -118,17 +108,11 @@ export default async function AdminFinanceiroRelatoriosPage({
       {/* ── Cabeçalho ───────────────────────────────────── */}
       <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
-          <div className='space-y-3'>
-            <Button
-              asChild
-              variant='outline'
-              className='border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
-            >
-              <Link href='/admin/financeiro'>
-                <ArrowLeft className='mr-2 h-4 w-4' />
-                Voltar ao financeiro
-              </Link>
-            </Button>
+          <div className='space-y-4'>
+            <AdminBackButton
+              href='/admin/financeiro'
+              label='Voltar ao financeiro'
+            />
 
             <div className='space-y-1'>
               <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
@@ -236,104 +220,35 @@ export default async function AdminFinanceiroRelatoriosPage({
             </p>
           </div>
 
-          <div className='mt-6 overflow-hidden rounded-2xl border border-white/10'>
-            <div className='grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr] border-b border-white/10 bg-zinc-900 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-zinc-400'>
-              <span>Plano</span>
-              <span>Faturas</span>
-              <span>Pagas</span>
-              <span>Adimplência</span>
-              <span>Receita</span>
-            </div>
-            <div className='divide-y divide-white/10'>
-              {byPlan.map((plan) => (
-                <div
-                  key={plan.planName}
-                  className='grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr] items-center px-6 py-4 text-sm'
-                >
-                  <span className='font-semibold text-white'>
-                    {plan.planName}
-                  </span>
-                  <span className='text-zinc-300'>{plan.totalInvoices}</span>
-                  <span className='text-zinc-300'>{plan.paidInvoices}</span>
-                  <span
-                    className={
-                      plan.adimplencyRate >= 80
-                        ? 'font-medium text-emerald-400'
-                        : 'font-medium text-red-400'
-                    }
-                  >
-                    {plan.adimplencyRate}%
-                  </span>
-                  <span className='font-semibold text-emerald-400'>
-                    {plan.revenueLabel}
-                  </span>
-                </div>
-              ))}
-            </div>
+          <div className='mt-6'>
+            <FinanceReportByPlanTable rows={byPlan} />
           </div>
         </section>
       )}
 
       {/* ── Pagamentos recebidos ────────────────────────── */}
-      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
-        <div className='flex items-center justify-between'>
-          <div className='space-y-1'>
+      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6'>
+        <div className='space-y-1'>
+          <div className='flex flex-wrap items-center gap-2'>
             <h2 className='text-lg font-semibold text-white'>
               Pagamentos recebidos
             </h2>
-            <p className='text-sm text-zinc-400'>
-              Todos os pagamentos confirmados em {monthName} {year}.
-            </p>
+            {payments.length > 0 ? (
+              <span className='inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-300'>
+                {payments.length} registro{payments.length !== 1 ? 's' : ''}
+              </span>
+            ) : null}
           </div>
-          {payments.length > 0 && (
-            <span className='rounded-full bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-300'>
-              {payments.length} registro{payments.length !== 1 ? 's' : ''}
-            </span>
-          )}
+          <p className='text-sm text-zinc-400'>
+            Todos os pagamentos confirmados em {monthName} {year}.
+          </p>
         </div>
 
-        <div className='mt-6 overflow-hidden rounded-2xl border border-white/10'>
-          <div className='grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr] border-b border-white/10 bg-zinc-900 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-zinc-400'>
-            <span>Aluno</span>
-            <span>Plano</span>
-            <span>Valor</span>
-            <span>Forma</span>
-            <span>Data</span>
-          </div>
-
-          <div className='divide-y divide-white/10'>
-            {payments.length === 0 ? (
-              <div className='px-6 py-16 text-center text-sm text-zinc-500'>
-                Nenhum pagamento confirmado em {monthName} {year}.
-              </div>
-            ) : (
-              payments.map((p) => (
-                <div
-                  key={p.paymentId}
-                  className='grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr] items-center px-6 py-4 text-sm'
-                >
-                  <span className='font-semibold text-white'>
-                    {p.studentName}
-                  </span>
-                  <span className='text-zinc-300'>{p.planName}</span>
-                  <span className='font-semibold text-emerald-400'>
-                    {p.amountLabel}
-                  </span>
-                  <div>
-                    <Badge
-                      className={
-                        METHOD_COLORS[p.method] ??
-                        'border-zinc-500/20 bg-zinc-500/10 text-zinc-400'
-                      }
-                    >
-                      {p.methodLabel}
-                    </Badge>
-                  </div>
-                  <span className='text-zinc-300'>{p.paidAt}</span>
-                </div>
-              ))
-            )}
-          </div>
+        <div className='mt-6'>
+          <FinanceReportPaymentsTable
+            rows={payments}
+            emptyMessage={`Nenhum pagamento confirmado em ${monthName} ${year}.`}
+          />
         </div>
       </section>
     </div>

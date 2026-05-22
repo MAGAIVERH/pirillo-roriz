@@ -1,6 +1,4 @@
-import Link from 'next/link';
 import {
-  ArrowLeft,
   CalendarClock,
   CreditCard,
   GraduationCap,
@@ -11,7 +9,7 @@ import {
   Users,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { AdminBackButton } from '@/components/layout/admin-back-button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EligibleForPromotionBanner } from '@/modules/students/components/eligible-for-promotion-banner';
 import { StudentAttendanceHistoryCard } from '@/modules/students/components/student-attendance-history-card';
@@ -141,32 +139,23 @@ export default async function AdminAlunoDetailsPage({
 
 
   return (
-    <div className='space-y-6'>
+    <div className='min-w-0 space-y-6'>
       {/* Cabeçalho */}
-      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
+      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6'>
         <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-          <div className='space-y-3'>
-            <Button
-              asChild
-              variant='outline'
-              className='border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
-            >
-              <Link href='/admin/alunos'>
-                <ArrowLeft className='mr-2 h-4 w-4' />
-                Voltar para alunos
-              </Link>
-            </Button>
+          <div className='space-y-4'>
+            <AdminBackButton href='/admin/alunos' label='Voltar para alunos' />
 
             <div className='space-y-2'>
               <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
                 Detalhes do aluno
               </p>
 
-              <h1 className='text-3xl font-bold tracking-tight'>
+              <h1 className='text-2xl font-bold tracking-tight sm:text-3xl'>
                 {student.fullName}
               </h1>
 
-              <p className='max-w-3xl text-sm leading-6 text-zinc-400'>
+              <p className='max-w-3xl text-sm leading-6 break-words text-zinc-400'>
                 Aqui você acompanha os dados do aluno e pode lançar presença
                 manual para histórico e migração da base antiga.
               </p>
