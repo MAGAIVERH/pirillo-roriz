@@ -1,134 +1,65 @@
-import { Users, GraduationCap, CalendarDays, ShoppingBag } from 'lucide-react';
+import { DashboardEligibleStudentsCard } from '@/modules/dashboard/components/dashboard-eligible-students-card';
+import { DashboardFinancePulseCard } from '@/modules/dashboard/components/dashboard-finance-pulse';
+import { DashboardMissingRulesCard } from '@/modules/dashboard/components/dashboard-missing-rules-card';
+import { DashboardQuickActions } from '@/modules/dashboard/components/dashboard-quick-actions';
+import { DashboardStatsGrid } from '@/modules/dashboard/components/dashboard-stats-grid';
+import { DashboardWarningsCard } from '@/modules/dashboard/components/dashboard-warnings-card';
+import { RecalculateProgressButton } from '@/modules/dashboard/components/recalculate-progress-button';
+import { getDashboardOverview } from '@/modules/dashboard/queries/get-dashboard-overview';
 
-const cards = [
-  {
-    title: 'Alunos ativos',
-    value: '128',
-    description: 'Visão inicial do total atual de alunos ativos.',
-    icon: Users,
-  },
-  {
-    title: 'Turmas em andamento',
-    value: '12',
-    description: 'Quantidade de turmas atualmente cadastradas.',
-    icon: CalendarDays,
-  },
-  {
-    title: 'Graduações próximas',
-    value: '9',
-    description: 'Alunos que podem entrar em análise de graduação.',
-    icon: GraduationCap,
-  },
-  {
-    title: 'Pedidos da loja',
-    value: '6',
-    description: 'Pedidos aguardando separação ou retirada.',
-    icon: ShoppingBag,
-  },
-];
+const NOW = new Date();
 
-export default function AdminPage() {
+const HOUR_GREETING = (() => {
+  const hour = NOW.getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+})();
+
+export default async function AdminPage() {
+  const dashboard = await getDashboardOverview();
+
+  const eligibleStat = dashboard.stats.find(
+    (stat) => stat.id === 'eligibleForPromotion',
+  );
+  const eligibleCount = eligibleStat ? Number(eligibleStat.value.replace(/\D/g, '')) : 0;
+
   return (
-    <div className='space-y-6'>
-      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
-        <div className='space-y-2'>
-          <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
-            Pirillo Roriz
-          </p>
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-red-500">
+              Pirillo Roriz · Painel
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-white">
+              {HOUR_GREETING}, Mestre
+            </h1>
+            <p className="max-w-2xl text-sm leading-7 text-zinc-400">
+              Visão consolidada da unidade: matrículas ativas, receita do mês,
+              alunos aptos a graduar e operação da loja em um só lugar.
+            </p>
+          </div>
 
-          <h1 className='text-3xl font-bold tracking-tight'>
-            Painel administrativo
-          </h1>
-
-          <p className='max-w-2xl text-sm text-zinc-400'>
-            Essa é a fundação visual da área administrativa. Agora já temos uma
-            estrutura pronta para receber dashboard, alunos, professores,
-            turmas, financeiro, analytics e loja.
-          </p>
+          <RecalculateProgressButton />
         </div>
       </section>
 
-      <section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-        {cards.map(({ title, value, description, icon: Icon }) => (
-          <article
-            key={title}
-            className='rounded-2xl border border-white/10 bg-zinc-950 p-5'
-          >
-            <div className='mb-4 flex items-start justify-between gap-3'>
-              <div>
-                <p className='text-sm text-zinc-400'>{title}</p>
-                <h2 className='mt-2 text-3xl font-bold'>{value}</h2>
-              </div>
+      <DashboardStatsGrid stats={dashboard.stats} />
 
-              <div className='flex h-11 w-11 items-center justify-center rounded-xl bg-red-600/15 text-red-500'>
-                <Icon className='h-5 w-5' />
-              </div>
-            </div>
+      <DashboardMissingRulesCard students={dashboard.studentsMissingRule} />
 
-            <p className='text-sm leading-6 text-zinc-400'>{description}</p>
-          </article>
-        ))}
-      </section>
+      <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+        <DashboardEligibleStudentsCard
+          students={dashboard.eligibleStudents}
+          totalCount={eligibleCount}
+        />
+        <DashboardQuickActions />
+      </div>
 
-      <section className='grid gap-4 xl:grid-cols-[1.4fr_0.8fr]'>
-        <article className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
-          <div className='space-y-1'>
-            <h2 className='text-lg font-semibold'>Próximos módulos</h2>
-            <p className='text-sm text-zinc-400'>
-              A próxima etapa será transformar essa base visual em navegação
-              real do sistema.
-            </p>
-          </div>
+      <DashboardFinancePulseCard finance={dashboard.finance} />
 
-          <div className='mt-6 grid gap-3 sm:grid-cols-2'>
-            {[
-              'Gestão de alunos',
-              'Gestão de professores',
-              'Turmas e horários',
-              'Presença e QR Code',
-              'Graduações',
-              'Financeiro',
-              'Loja e estoque',
-              'Analytics',
-            ].map((item) => (
-              <div
-                key={item}
-                className='rounded-xl border border-white/10 bg-zinc-900 px-4 py-3 text-sm text-zinc-300'
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <article className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
-          <div className='space-y-1'>
-            <h2 className='text-lg font-semibold'>Status da fundação</h2>
-            <p className='text-sm text-zinc-400'>
-              Tudo que precisávamos para sair do zero já está validado.
-            </p>
-          </div>
-
-          <div className='mt-6 space-y-3'>
-            {[
-              'Next.js configurado',
-              'Prisma conectado ao Neon',
-              'Migration inicial aplicada',
-              'Better Auth funcionando',
-              'Login e logout validados',
-              'Tema base configurado',
-              'Shell inicial do admin criado',
-            ].map((item) => (
-              <div
-                key={item}
-                className='rounded-xl border border-white/10 bg-zinc-900 px-4 py-3 text-sm text-zinc-300'
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </article>
-      </section>
+      <DashboardWarningsCard warnings={dashboard.warnings} />
     </div>
   );
 }
