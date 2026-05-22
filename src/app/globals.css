@@ -34,6 +34,20 @@
   --info: 211 100% 56%;
   --info-foreground: 0 0% 98%;
 
+  /* Analytics semantic */
+  --success: 152 76% 47%;
+  --success-foreground: 0 0% 98%;
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 10%;
+
+  /* BJJ belt colors */
+  --belt-white: 0 0% 96%;
+  --belt-blue: 211 100% 50%;
+  --belt-purple: 290 70% 38%;
+  --belt-brown: 25 60% 28%;
+  --belt-black: 0 0% 8%;
+
   --radius: 0.75rem;
 }
 
