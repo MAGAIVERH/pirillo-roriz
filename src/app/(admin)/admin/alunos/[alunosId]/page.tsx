@@ -13,13 +13,17 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { EligibleForPromotionBanner } from '@/modules/students/components/eligible-for-promotion-banner';
 import { StudentAttendanceHistoryCard } from '@/modules/students/components/student-attendance-history-card';
 import { StudentProgressCard } from '@/modules/students/components/student-progress-card';
 import { StudentStatusBadge } from '@/modules/students/components/student-status-badge';
+import { UpdateStudentStatusDialog } from '@/modules/students/components/update-student-status-dialog';
 import { StudentFinanceCard } from '@/modules/finance/components/student-finance-card';
 
 import { getStudentAttendanceHistory } from '@/modules/students/queries/get-student-attendance-history';
 import { getStudentById } from '@/modules/students/queries/get-student-by-id';
+import { getStudentEligibility } from '@/modules/students/queries/get-eligible-students';
+import { getCancellationReasons } from '@/modules/students/queries/get-cancellation-reasons';
 import { calculateStudentProgress } from '@/modules/students/lib/calcule-student-progress';
 import { getStudentFinanceSummary } from '@/modules/finance/queries/get-student-finance-summary';
 
@@ -99,12 +103,21 @@ export default async function AdminAlunoDetailsPage({
 }: AdminAlunoDetailsPageProps) {
   const { alunosId } = await params;
 
-  const [student, attendances, progressResult, finance] = await Promise.all([
+  const [
+    student,
+    attendances,
+    progressResult,
+    finance,
+    cancellationReasons,
+  ] = await Promise.all([
     getStudentById(alunosId),
     getStudentAttendanceHistory(alunosId),
     calculateStudentProgress(alunosId),
     getStudentFinanceSummary(alunosId),
+    getCancellationReasons(),
   ]);
+
+  const eligibility = await getStudentEligibility(alunosId);
 
   const progress =
     progressResult.success && progressResult.progress
@@ -125,6 +138,7 @@ export default async function AdminAlunoDetailsPage({
             ) ?? '-',
         }
       : null;
+
 
   return (
     <div className='space-y-6'>
@@ -159,9 +173,29 @@ export default async function AdminAlunoDetailsPage({
             </div>
           </div>
 
-          <StudentStatusBadge status={student.status} />
+          <div className='flex flex-col items-start gap-3 lg:items-end'>
+            <StudentStatusBadge status={student.status} />
+            <UpdateStudentStatusDialog
+              studentId={student.id}
+              currentStatus={student.status}
+              reasons={cancellationReasons}
+            />
+          </div>
         </div>
       </section>
+
+      {eligibility && (
+        <EligibleForPromotionBanner
+          studentId={student.id}
+          studentName={student.fullName}
+          currentBeltName={eligibility.currentBeltName}
+          currentDegreeNumber={eligibility.currentDegreeNumber}
+          nextBeltName={eligibility.nextBeltName}
+          nextDegreeNumber={eligibility.nextDegreeNumber}
+          projectedEligibilityDate={eligibility.projectedEligibilityDate}
+          attendancesSincePromotion={eligibility.attendancesSincePromotion}
+        />
+      )}
 
       {/* Cards de info principal */}
       <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
