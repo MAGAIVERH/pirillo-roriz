@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Trophy } from 'lucide-react';
 
 import { StudentStatusBadge } from '@/modules/students/components/student-status-badge';
 import type { StudentListItem } from '@/modules/students/types/student-list-item';
@@ -104,7 +104,15 @@ export const StudentsTable = ({ students }: StudentsTableProps) => {
                     </td>
 
                     <td className='px-5 py-4 text-sm text-zinc-300'>
-                      {student.belt}
+                      <div className='flex flex-col items-start gap-1'>
+                        <span>{student.belt}</span>
+                        {student.isEligibleForPromotion && (
+                          <span className='inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400'>
+                            <Trophy className='h-3 w-3' />
+                            Apto
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className='px-5 py-4 text-sm text-zinc-300'>

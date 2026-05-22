@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { ProgressStatus } from '@/generated/prisma/client';
+import type { ProgressStatus } from '@/generated/prisma/client';
 import { recalculateStudentProgressAction } from '@/modules/students/actions/recalculate-student-progress';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -17,4 +17,5 @@ export type StudentListItem = {
   status: StudentListStatus;
   joinDate: string;
   className: string;
+  isEligibleForPromotion: boolean;
 };

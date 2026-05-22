@@ -73,6 +73,9 @@ export const getStudentsList = async (): Promise<StudentListItem[]> => {
         },
         take: 1,
       },
+      progress: {
+        select: { status: true },
+      },
     },
     orderBy: [
       {
@@ -93,5 +96,6 @@ export const getStudentsList = async (): Promise<StudentListItem[]> => {
       ? new Date(student.joinDate).toLocaleDateString('pt-BR')
       : '-',
     className: student.enrollments[0]?.class?.name || '-',
+    isEligibleForPromotion: student.progress?.status === 'ELIGIBLE',
   }));
 };
