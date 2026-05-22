@@ -18,10 +18,10 @@ export function AcquisitionFunnelView({ funnel }: AcquisitionFunnelProps) {
     funnel.finalConversionPercent >= funnel.goalConversionPercent;
 
   return (
-    <section className="grid gap-6 rounded-2xl border border-white/10 bg-zinc-950 p-6 lg:grid-cols-[1.4fr_1fr]">
-      <div className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div>
+    <section className="grid gap-6 rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6 lg:grid-cols-[1.4fr_1fr]">
+      <div className="min-w-0 space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-1">
             <h3 className="text-base font-semibold text-white">
               Funil de aquisição
             </h3>
@@ -30,13 +30,13 @@ export function AcquisitionFunnelView({ funnel }: AcquisitionFunnelProps) {
             </p>
           </div>
           <div
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`inline-flex w-fit shrink-0 items-center gap-1.5 self-start whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${
               meetsGoal
                 ? 'bg-emerald-500/15 text-emerald-400'
                 : 'bg-amber-500/15 text-amber-400'
             }`}
           >
-            <Target className="h-3 w-3" />
+            <Target className="h-3 w-3 shrink-0" />
             {formatPercent(funnel.finalConversionPercent, 0)} · meta{' '}
             {funnel.goalConversionPercent}%
           </div>
@@ -47,14 +47,14 @@ export function AcquisitionFunnelView({ funnel }: AcquisitionFunnelProps) {
             const width = widthForStep(step.count, maxCount);
             return (
               <div key={step.id} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <p className="font-medium text-white">{step.label}</p>
-                  <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-start justify-between gap-3 text-sm">
+                  <p className="min-w-0 font-medium text-white">{step.label}</p>
+                  <div className="flex shrink-0 items-center gap-2 text-xs">
                     <span className="font-semibold text-white">
                       {formatNumber(step.count)}
                     </span>
                     {step.conversionPercent !== null && (
-                      <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">
+                      <span className="whitespace-nowrap rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-300">
                         {step.conversionPercent}% conv.
                       </span>
                     )}
@@ -72,7 +72,7 @@ export function AcquisitionFunnelView({ funnel }: AcquisitionFunnelProps) {
         </div>
       </div>
 
-      <div className="space-y-3 rounded-xl border border-white/5 bg-zinc-900/40 p-4">
+      <div className="min-w-0 space-y-3 rounded-xl border border-white/5 bg-zinc-900/40 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
           Origem dos leads
         </p>
@@ -88,9 +88,11 @@ export function AcquisitionFunnelView({ funnel }: AcquisitionFunnelProps) {
               const percent = Math.round((source.count / total) * 100);
               return (
                 <li key={source.name} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="truncate text-zinc-300">{source.name}</span>
-                    <span className="font-semibold text-white">
+                  <div className="flex items-center justify-between gap-3 text-xs">
+                    <span className="min-w-0 truncate text-zinc-300">
+                      {source.name}
+                    </span>
+                    <span className="shrink-0 whitespace-nowrap font-semibold text-white">
                       {source.count} ({percent}%)
                     </span>
                   </div>
@@ -108,4 +110,4 @@ export function AcquisitionFunnelView({ funnel }: AcquisitionFunnelProps) {
       </div>
     </section>
   );
-}
+};

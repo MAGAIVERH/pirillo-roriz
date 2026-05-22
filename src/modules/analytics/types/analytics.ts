@@ -61,14 +61,26 @@ export type EnrollmentsPoint = {
   net: number;
 };
 
-export type PresenceHeatmapCell = {
+export type PresenceCalendarDay = {
+  dateKey: string;
+  dayOfMonth: number;
   weekDay: number;
-  hour: number;
   checkIns: number;
+  inMonth: boolean;
+  isFuture: boolean;
+  isToday: boolean;
+};
+
+export type PresenceCalendarWeek = {
+  weekIndex: number;
+  label: string;
+  days: PresenceCalendarDay[];
 };
 
 export type PresenceData = {
-  heatmap: PresenceHeatmapCell[];
+  calendarWeeks: PresenceCalendarWeek[];
+  monthLabel: string;
+  isCurrentMonth: boolean;
   attendanceRate: number;
   studentsBelowHalfRate: number;
   topClass: { name: string; schedule: string | null } | null;

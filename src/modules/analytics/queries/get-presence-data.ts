@@ -1,19 +1,84 @@
+import { addDays, format, isAfter, isWithinInterval, startOfDay, startOfWeek } from 'date-fns';
+
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
 import { safeDivision } from '../lib/analytics-helpers';
 import type {
   AnalyticsPeriod,
+  PresenceCalendarDay,
+  PresenceCalendarWeek,
   PresenceData,
-  PresenceHeatmapCell,
 } from '../types/analytics';
 
 const ATTENDANCE_WINDOW_DAYS = 30;
+
+function buildCalendarWeeks(
+  periodStart: Date,
+  periodEnd: Date,
+  checkInsByDate: Map<string, number>,
+  referenceNow: Date,
+  isCurrentMonth: boolean,
+): PresenceCalendarWeek[] {
+  const today = startOfDay(referenceNow);
+  const weeks: PresenceCalendarWeek[] = [];
+  let weekStart = startOfWeek(periodStart, { weekStartsOn: 0 });
+  let weekIndex = 0;
+
+  while (weekStart <= periodEnd) {
+    const days: PresenceCalendarDay[] = [];
+
+    for (let offset = 0; offset < 7; offset += 1) {
+      const day = addDays(weekStart, offset);
+      const dateKey = format(day, 'yyyy-MM-dd');
+      const inMonth = isWithinInterval(day, {
+        start: periodStart,
+        end: periodEnd,
+      });
+      const isFuture = isCurrentMonth && isAfter(day, today);
+      const isToday = dateKey === format(today, 'yyyy-MM-dd');
+
+      days.push({
+        dateKey,
+        dayOfMonth: day.getDate(),
+        weekDay: day.getDay(),
+        checkIns:
+          inMonth && !isFuture ? (checkInsByDate.get(dateKey) ?? 0) : 0,
+        inMonth,
+        isFuture: inMonth && isFuture,
+        isToday,
+      });
+    }
+
+    if (days.some((day) => day.inMonth)) {
+      const firstDayInMonth = days.find((day) => day.inMonth);
+      const lastDayInMonth = [...days].reverse().find((day) => day.inMonth);
+
+      weeks.push({
+        weekIndex,
+        label:
+          firstDayInMonth && lastDayInMonth
+            ? `${firstDayInMonth.dayOfMonth}–${lastDayInMonth.dayOfMonth}`
+            : `Sem ${weekIndex + 1}`,
+        days,
+      });
+      weekIndex += 1;
+    }
+
+    weekStart = addDays(weekStart, 7);
+  }
+
+  return weeks;
+}
 
 export async function getPresenceData(
   period: AnalyticsPeriod,
 ): Promise<PresenceData> {
   const academy = await getOrCreateDefaultAcademy();
+  const referenceNow = new Date();
+  const isCurrentMonth =
+    period.current.year === referenceNow.getFullYear() &&
+    period.current.month === referenceNow.getMonth() + 1;
 
   const [presentAttendances, activeStudents, attendanceByStudent, topClassRows] =
     await Promise.all([
@@ -62,7 +127,7 @@ export async function getPresenceData(
       }),
     ]);
 
-  const cellMap = new Map<string, PresenceHeatmapCell>();
+  const checkInsByDate = new Map<string, number>();
   const classAggregate = new Map<
     string,
     { name: string; total: number; sessionTimes: Date[] }
@@ -71,17 +136,9 @@ export async function getPresenceData(
   for (const attendance of presentAttendances) {
     const session = attendance.classSession;
     const startsAt = session.startsAt;
+    const dateKey = format(startsAt, 'yyyy-MM-dd');
 
-    const weekDay = startsAt.getDay();
-    const hour = startsAt.getHours();
-    const key = `${weekDay}-${hour}`;
-
-    const existing = cellMap.get(key);
-    if (existing) {
-      existing.checkIns += 1;
-    } else {
-      cellMap.set(key, { weekDay, hour, checkIns: 1 });
-    }
+    checkInsByDate.set(dateKey, (checkInsByDate.get(dateKey) ?? 0) + 1);
 
     const classBucket = classAggregate.get(session.classId);
     if (classBucket) {
@@ -95,6 +152,14 @@ export async function getPresenceData(
       });
     }
   }
+
+  const calendarWeeks = buildCalendarWeeks(
+    period.current.start,
+    period.current.end,
+    checkInsByDate,
+    referenceNow,
+    isCurrentMonth,
+  );
 
   const totalPresences = presentAttendances.length;
   const sessionsInMonth = topClassRows.length || 1;
@@ -123,7 +188,9 @@ export async function getPresenceData(
   }
 
   return {
-    heatmap: Array.from(cellMap.values()),
+    calendarWeeks,
+    monthLabel: period.current.label,
+    isCurrentMonth,
     attendanceRate,
     studentsBelowHalfRate,
     topClass,
