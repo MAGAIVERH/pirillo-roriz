@@ -28,7 +28,7 @@ export function RecalculateProgressButton() {
       variant="outline"
       onClick={handleClick}
       disabled={isPending}
-      className="h-10 gap-2 rounded-xl border-white/10 bg-zinc-900 text-sm text-white hover:bg-zinc-800 hover:text-white"
+      className="h-10 w-full gap-2 rounded-xl border-white/10 bg-zinc-900 text-sm text-white hover:bg-zinc-800 hover:text-white sm:w-auto"
     >
       <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
       {isPending ? 'Recalculando...' : 'Recalcular progressos'}

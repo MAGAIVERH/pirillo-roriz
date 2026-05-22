@@ -25,23 +25,25 @@ export default async function AdminPage() {
   const eligibleCount = eligibleStat ? Number(eligibleStat.value.replace(/\D/g, '')) : 0;
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
+    <div className="min-w-0 space-y-6">
+      <section className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <p className="text-sm font-medium uppercase tracking-[0.18em] text-red-500">
               Pirillo Roriz · Painel
             </p>
-            <h1 className="text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
               {HOUR_GREETING}, Mestre
             </h1>
-            <p className="max-w-2xl text-sm leading-7 text-zinc-400">
+            <p className="max-w-2xl text-sm leading-7 break-words text-zinc-400">
               Visão consolidada da unidade: matrículas ativas, receita do mês,
               alunos aptos a graduar e operação da loja em um só lugar.
             </p>
           </div>
 
-          <RecalculateProgressButton />
+          <div className="w-full shrink-0 lg:w-auto">
+            <RecalculateProgressButton />
+          </div>
         </div>
       </section>
 

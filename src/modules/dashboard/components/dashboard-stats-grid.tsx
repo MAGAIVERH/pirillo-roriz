@@ -48,7 +48,7 @@ type DashboardStatsGridProps = {
 
 export function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
   return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <section className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
       {stats.map((stat) => {
         const Icon = ICONS[stat.id];
         const style = HIGHLIGHT_STYLES[stat.highlight ?? 'default'];
@@ -56,12 +56,12 @@ export function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
         return (
           <article
             key={stat.id}
-            className="rounded-2xl border border-white/10 bg-zinc-950 p-5"
+            className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-5"
           >
             <div className="mb-4 flex items-start justify-between gap-3">
-              <div className="space-y-1">
+              <div className="min-w-0 space-y-1">
                 <p className="text-sm text-zinc-400">{stat.title}</p>
-                <h2 className={`text-3xl font-bold tracking-tight ${style.value}`}>
+                <h2 className={`text-2xl font-bold tracking-tight break-words sm:text-3xl ${style.value}`}>
                   {stat.value}
                 </h2>
               </div>
@@ -71,7 +71,7 @@ export function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
                 <Icon className="h-5 w-5" />
               </div>
             </div>
-            <p className="text-sm leading-6 text-zinc-400">{stat.description}</p>
+            <p className="text-sm leading-6 break-words text-zinc-400">{stat.description}</p>
           </article>
         );
       })}
