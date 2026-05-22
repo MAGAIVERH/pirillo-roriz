@@ -38,14 +38,14 @@ export const FinanceReportFilter = ({
   const years = Array.from({ length: 3 }, (_, i) => currentYear - i);
 
   return (
-    <div className='flex items-center gap-3'>
+    <div className='grid w-full grid-cols-2 gap-3 sm:max-w-xs'>
       <Select
         value={String(month)}
         onValueChange={(val) =>
           router.push(`/admin/financeiro/relatorios?month=${val}&year=${year}`)
         }
       >
-        <SelectTrigger className='w-40 border-white/10 bg-zinc-900 text-white hover:bg-zinc-800'>
+        <SelectTrigger className='w-full border-white/10 bg-zinc-900 text-white hover:bg-zinc-800'>
           <SelectValue />
         </SelectTrigger>
         <SelectContent className='border-white/10 bg-zinc-950 text-white'>
@@ -63,7 +63,7 @@ export const FinanceReportFilter = ({
           router.push(`/admin/financeiro/relatorios?month=${month}&year=${val}`)
         }
       >
-        <SelectTrigger className='w-28 border-white/10 bg-zinc-900 text-white hover:bg-zinc-800'>
+        <SelectTrigger className='w-full border-white/10 bg-zinc-900 text-white hover:bg-zinc-800'>
           <SelectValue />
         </SelectTrigger>
         <SelectContent className='border-white/10 bg-zinc-950 text-white'>

@@ -156,15 +156,17 @@ export default async function AdminFinanceiroPage({
   ];
 
   return (
-    <div className='space-y-6'>
+    <div className='min-w-0 space-y-6'>
       {/* Cabeçalho */}
-      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
+      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6'>
         <div className='space-y-2'>
           <p className='text-sm font-medium uppercase tracking-[0.18em] text-red-500'>
             Módulo
           </p>
-          <h1 className='text-3xl font-bold tracking-tight'>Financeiro</h1>
-          <p className='max-w-4xl text-sm leading-7 text-zinc-400'>
+          <h1 className='text-2xl font-bold tracking-tight sm:text-3xl'>
+            Financeiro
+          </h1>
+          <p className='max-w-4xl text-sm leading-7 break-words text-zinc-400'>
             Acompanhe receita, adimplência, cobranças e mensalidades da academia
             em tempo real.
           </p>
@@ -209,9 +211,11 @@ export default async function AdminFinanceiroPage({
       </section>
 
       {/* Acesso rápido com contadores reais */}
-      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-6'>
+      <section className='rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6'>
         <div className='space-y-1'>
-          <h2 className='text-2xl font-semibold text-white'>Acesso rápido</h2>
+          <h2 className='text-xl font-semibold text-white sm:text-2xl'>
+            Acesso rápido
+          </h2>
           <p className='text-sm text-zinc-400'>
             Selecione uma área para filtrar as informações abaixo.
           </p>
