@@ -117,15 +117,17 @@ export function WarningsClientView({ initialWarnings }: WarningsClientViewProps)
 
   return (
     <>
-      <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
-        <div className="mb-6 flex flex-col gap-4 border-b border-white/10 pb-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-1">
-            {filterTabs.map((tab) => (
+      <section className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
+        <div className="mb-6 flex flex-col gap-3 border-b border-white/10 pb-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="grid w-full grid-cols-6 gap-1.5 sm:flex sm:w-auto sm:flex-wrap sm:gap-1">
+            {filterTabs.map((tab, index) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setStatusFilter(tab.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                className={`flex items-center justify-center rounded-lg px-2 py-2 text-xs font-medium transition sm:col-span-auto sm:flex-initial sm:px-3 sm:py-1.5 ${
+                  index < 3 ? 'col-span-2' : 'col-span-3'
+                } ${
                   statusFilter === tab.id
                     ? 'bg-red-500/15 text-red-400'
                     : 'text-zinc-400 hover:bg-zinc-900 hover:text-white'
@@ -139,7 +141,7 @@ export function WarningsClientView({ initialWarnings }: WarningsClientViewProps)
           <Button
             type="button"
             onClick={openNew}
-            className="h-9 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-500"
+            className="h-10 w-full shrink-0 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-500 sm:w-auto lg:h-9"
           >
             <Plus className="h-4 w-4" />
             Novo aviso
@@ -152,7 +154,7 @@ export function WarningsClientView({ initialWarnings }: WarningsClientViewProps)
             placeholder="Buscar aviso..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="h-10 max-w-xs rounded-xl border-white/10 bg-zinc-900 px-4 text-sm text-white placeholder:text-zinc-500"
+            className="h-10 w-full rounded-xl border-white/10 bg-zinc-900 px-4 text-sm text-white placeholder:text-zinc-500 sm:max-w-xs"
           />
 
           <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
