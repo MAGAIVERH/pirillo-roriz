@@ -2,24 +2,15 @@
 
 import { useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -230,47 +221,15 @@ export const StudentCreateForm = ({
                 <div className='space-y-2'>
                   <Label>Data de nascimento</Label>
 
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        className={cn(
-                          'h-10 w-full justify-between border-white/10 bg-zinc-900 text-left font-normal text-white hover:bg-zinc-800 hover:text-white',
-                          !field.value && 'text-zinc-500',
-                        )}
-                        aria-invalid={fieldState.invalid}
-                      >
-                        {field.value ? (
-                          format(field.value, 'dd/MM/yyyy', {
-                            locale: ptBR,
-                          })
-                        ) : (
-                          <span>dd/mm/aaaa</span>
-                        )}
-
-                        <CalendarIcon className='h-4 w-4 text-white' />
-                      </Button>
-                    </PopoverTrigger>
-
-                    <PopoverContent
-                      align='start'
-                      className='z-50 w-auto border-white/10 bg-zinc-950 p-0 text-white'
-                    >
-                      <Calendar
-                        mode='single'
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        locale={ptBR}
-                        captionLayout='dropdown'
-                        startMonth={new Date(1940, 0)}
-                        endMonth={new Date()}
-                        defaultMonth={field.value ?? new Date(2000, 0)}
-                        initialFocus
-                        className='rounded-md bg-zinc-950 text-white'
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <DateInput
+                    value={field.value ?? undefined}
+                    onChange={(date) => field.onChange(date ?? null)}
+                    minDate={new Date(1940, 0, 1)}
+                    maxDate={new Date()}
+                    defaultMonth={new Date(2000, 0)}
+                    invalid={fieldState.invalid}
+                    ariaLabel='Data de nascimento'
+                  />
 
                   {fieldState.error ? (
                     <p className='text-sm text-red-400'>
@@ -499,47 +458,19 @@ export const StudentCreateForm = ({
                         : 'Data de início'}
                     </Label>
 
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className={cn(
-                            'h-10 w-full justify-between border-white/10 bg-zinc-900 text-left font-normal text-white hover:bg-zinc-800 hover:text-white',
-                            !field.value && 'text-zinc-500',
-                          )}
-                          aria-invalid={fieldState.invalid}
-                        >
-                          {field.value ? (
-                            format(field.value, 'dd/MM/yyyy', {
-                              locale: ptBR,
-                            })
-                          ) : (
-                            <span>dd/mm/aaaa</span>
-                          )}
-
-                          <CalendarIcon className='h-4 w-4 text-white' />
-                        </Button>
-                      </PopoverTrigger>
-
-                      <PopoverContent
-                        align='start'
-                        className='z-50 w-auto border-white/10 bg-zinc-950 p-0 text-white'
-                      >
-                        <Calendar
-                          mode='single'
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          locale={ptBR}
-                          captionLayout='dropdown'
-                          startMonth={new Date(1940, 0)}
-                          endMonth={new Date()}
-                          defaultMonth={field.value ?? new Date()}
-                          initialFocus
-                          className='rounded-md bg-zinc-950 text-white'
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <DateInput
+                      value={field.value ?? undefined}
+                      onChange={(date) => field.onChange(date ?? null)}
+                      minDate={new Date(1940, 0, 1)}
+                      maxDate={new Date()}
+                      defaultMonth={new Date()}
+                      invalid={fieldState.invalid}
+                      ariaLabel={
+                        studentHistoryType === 'existing'
+                          ? 'Data da última graduação'
+                          : 'Data de início'
+                      }
+                    />
 
                     <p className='text-sm text-zinc-500'>
                       {studentHistoryType === 'existing'

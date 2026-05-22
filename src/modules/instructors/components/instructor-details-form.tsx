@@ -1,21 +1,14 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { CalendarIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 import { updateInstructorAction } from '@/modules/instructors/actions/update-instructor';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -24,7 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
 
 type InstructorDetailsFormProps = {
   instructor: {
@@ -132,39 +124,14 @@ export const InstructorDetailsForm = ({
           <div className='space-y-2'>
             <p className='text-sm text-zinc-400'>Data de nascimento</p>
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  type='button'
-                  variant='outline'
-                  className={cn(
-                    'w-full justify-start border-white/10 bg-zinc-900 text-left font-normal text-white hover:bg-zinc-800 hover:text-white',
-                    !birthDate && 'text-zinc-500',
-                  )}
-                >
-                  <CalendarIcon className='mr-2 h-4 w-4' />
-                  {birthDate
-                    ? format(birthDate, 'dd/MM/yyyy', { locale: ptBR })
-                    : 'Selecione a data'}
-                </Button>
-              </PopoverTrigger>
-
-              <PopoverContent
-                className='w-auto border-white/10 bg-zinc-950 p-0 text-white'
-                align='start'
-              >
-                <Calendar
-                  mode='single'
-                  selected={birthDate}
-                  onSelect={setBirthDate}
-                  captionLayout='dropdown'
-                  fromYear={1940}
-                  toYear={new Date().getFullYear()}
-                  locale={ptBR}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <DateInput
+              value={birthDate}
+              onChange={setBirthDate}
+              minDate={new Date(1940, 0, 1)}
+              maxDate={new Date()}
+              defaultMonth={new Date(1995, 0)}
+              ariaLabel='Data de nascimento'
+            />
           </div>
 
           <div className='space-y-2'>
