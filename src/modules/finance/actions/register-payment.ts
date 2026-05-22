@@ -8,6 +8,7 @@ import {
   registerPaymentSchema,
   type RegisterPaymentSchema,
 } from '@/modules/finance/schemas/register-payment-schema';
+import { syncStudentDelinquencyStatus } from '@/modules/students/actions/sync-student-delinquency';
 
 export const registerPaymentAction = async (
   input: RegisterPaymentSchema,
@@ -82,6 +83,8 @@ export const registerPaymentAction = async (
         });
       }
     });
+
+    await syncStudentDelinquencyStatus(invoice.studentId);
 
     revalidatePath(`/admin/alunos/${invoice.studentId}`);
     revalidatePath('/admin/financeiro');
