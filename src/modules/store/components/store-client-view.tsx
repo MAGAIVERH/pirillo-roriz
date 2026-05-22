@@ -121,38 +121,42 @@ export function StoreClientView({
 
   return (
     <>
-      <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
-        <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-0">
-          <div className="flex gap-1">
-            {(['produtos', 'reservas'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`-mb-px flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition ${
-                  activeTab === tab
-                    ? 'border-red-500 text-white'
-                    : 'border-transparent text-zinc-400 hover:text-white'
-                }`}
-              >
-                {tab === 'produtos' ? 'Produtos' : 'Reservas'}
-                {tab === 'reservas' && pendingCount > 0 && (
-                  <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                    {pendingCount}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+      <section className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
+        <div className="mb-6 border-b border-white/10">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex w-full gap-1 sm:w-auto">
+              {(['produtos', 'reservas'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`-mb-px flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition sm:flex-initial sm:justify-start sm:px-4 ${
+                    activeTab === tab
+                      ? 'border-red-500 text-white'
+                      : 'border-transparent text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {tab === 'produtos' ? 'Produtos' : 'Reservas'}
+                  {tab === 'reservas' && pendingCount > 0 && (
+                    <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
+                      {pendingCount}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
 
-          <button
-            type="button"
-            onClick={openNew}
-            className="mb-1 flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500"
-          >
-            <Package className="h-4 w-4" />
-            Novo produto
-          </button>
+            {activeTab === 'produtos' ? (
+              <button
+                type="button"
+                onClick={openNew}
+                className="mb-3 flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 sm:mb-1 sm:w-auto sm:justify-start"
+              >
+                <Package className="h-4 w-4 shrink-0" />
+                Novo produto
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {activeTab === 'produtos' && (
@@ -162,7 +166,7 @@ export function StoreClientView({
               placeholder="Buscar produto..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="w-full max-w-xs rounded-xl border border-white/10 bg-zinc-900 px-4 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:border-red-500/50"
+              className="w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:border-red-500/50 sm:max-w-xs"
             />
 
             {filteredProducts.length === 0 ? (
