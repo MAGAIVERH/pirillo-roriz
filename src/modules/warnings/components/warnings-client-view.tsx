@@ -5,6 +5,19 @@ import { useRouter } from 'next/navigation';
 import { Megaphone, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
 import { createWarningAction } from '../actions/create-warning';
 import { deleteWarningAction } from '../actions/delete-warning';
 import { updateWarningAction } from '../actions/update-warning';
@@ -123,23 +136,23 @@ export function WarningsClientView({ initialWarnings }: WarningsClientViewProps)
             ))}
           </div>
 
-          <button
+          <Button
             type="button"
             onClick={openNew}
-            className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500"
+            className="h-9 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-500"
           >
             <Plus className="h-4 w-4" />
             Novo aviso
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-4">
-          <input
+          <Input
             type="text"
             placeholder="Buscar aviso..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="w-full max-w-xs rounded-xl border border-white/10 bg-zinc-900 px-4 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:border-red-500/50"
+            className="h-10 max-w-xs rounded-xl border-white/10 bg-zinc-900 px-4 text-sm text-white placeholder:text-zinc-500"
           />
 
           <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
@@ -168,43 +181,49 @@ export function WarningsClientView({ initialWarnings }: WarningsClientViewProps)
         </div>
       </section>
 
-      {deleteTargetId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-950 p-6">
-            <h3 className="text-lg font-semibold text-white">Remover aviso?</h3>
-            <p className="mt-2 text-sm text-zinc-400">
+      <AlertDialog
+        open={Boolean(deleteTargetId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTargetId(null);
+        }}
+      >
+        <AlertDialogContent className="rounded-2xl border-white/10 bg-zinc-950">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold text-white">
+              Remover aviso?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-zinc-400">
               Esta ação não pode ser desfeita. O comunicado deixará de aparecer
               nas plataformas.
-            </p>
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setDeleteTargetId(null)}
-                className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm text-zinc-400"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={confirmDelete}
-                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                Remover
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-9 rounded-xl border-white/10 bg-transparent text-sm text-zinc-400 hover:bg-zinc-900 hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                confirmDelete();
+              }}
+              className="h-9 rounded-xl bg-red-600 text-sm font-semibold text-white hover:bg-red-500"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {modalOpen && (
         <WarningModal
+          key={editing?.id ?? 'new'}
+          open={modalOpen}
+          onOpenChange={setModalOpen}
           warning={editing}
-          onClose={() => setModalOpen(false)}
           onSave={handleSave}
         />
       )}
     </>
   );
 }
-

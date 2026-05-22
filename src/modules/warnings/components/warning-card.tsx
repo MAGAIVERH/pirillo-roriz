@@ -122,7 +122,7 @@ export function WarningCard({ warning, onEdit, onDelete }: WarningCardProps) {
         <div className="mt-3 space-y-1 text-xs text-zinc-500">
           <p>Publicação: {formatDate(warning.publishedAt)}</p>
           <p>Validade: {warning.expiresAt ? formatDate(warning.expiresAt) : 'Sem expiração'}</p>
-          <p>Por {warning.createdByName}</p>
+          <p>Por Mestre Pirillo Roriz</p>
         </div>
       </div>
 

@@ -8,29 +8,55 @@ import {
   Megaphone,
   Tag,
   UserRound,
-  X,
 } from 'lucide-react';
 
-import type { Warning, WarningType, WarningVisibility } from '../types/warnings';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+
 import type { WarningInput } from '../schemas/warning-schema';
+import type { Warning, WarningType, WarningVisibility } from '../types/warnings';
+import {
+  DateRangePicker,
+  type WarningDateRange,
+} from './date-range-picker';
 
 type WarningModalProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   warning: Warning | null;
-  onClose: () => void;
   onSave: (
     data: WarningInput,
     id?: string,
   ) => Promise<{ success: boolean; message: string }>;
 };
 
-function toDateTimeLocalValue(date: Date | null) {
-  if (!date) return '';
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60_000);
-  return local.toISOString().slice(0, 16);
+function endOfDay(date: Date): Date {
+  const next = new Date(date);
+  next.setHours(23, 59, 59, 999);
+  return next;
 }
 
-export function WarningModal({ warning, onClose, onSave }: WarningModalProps) {
+function startOfDay(date: Date): Date {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+export function WarningModal({
+  open,
+  onOpenChange,
+  warning,
+  onSave,
+}: WarningModalProps) {
   const [isPending, startTransition] = useTransition();
 
   const [title, setTitle] = useState(warning?.title ?? '');
@@ -39,18 +65,16 @@ export function WarningModal({ warning, onClose, onSave }: WarningModalProps) {
   const [visibility, setVisibility] = useState<WarningVisibility>(
     warning?.visibility ?? 'todos',
   );
-  const [publishNow, setPublishNow] = useState(
-    warning ? warning.status !== 'rascunho' : true,
-  );
-  const [publishedAt, setPublishedAt] = useState(
-    toDateTimeLocalValue(warning?.publishedAt ?? null),
-  );
-  const [expiresAt, setExpiresAt] = useState(
-    toDateTimeLocalValue(warning?.expiresAt ?? null),
-  );
+  const [range, setRange] = useState<WarningDateRange>({
+    from: warning?.publishedAt ?? null,
+    to: warning?.expiresAt ?? null,
+  });
 
   function handleSave() {
     if (!title.trim() || !content.trim()) return;
+
+    const normalizedFrom = range.from ? startOfDay(range.from) : null;
+    const normalizedTo = range.to ? endOfDay(range.to) : null;
 
     startTransition(async () => {
       await onSave(
@@ -59,9 +83,9 @@ export function WarningModal({ warning, onClose, onSave }: WarningModalProps) {
           content: content.trim(),
           type,
           visibility,
-          publishNow,
-          publishedAt: publishNow ? undefined : publishedAt || undefined,
-          expiresAt: expiresAt || undefined,
+          publishNow: false,
+          publishedAt: normalizedFrom?.toISOString(),
+          expiresAt: normalizedTo?.toISOString(),
         },
         warning?.id,
       );
@@ -89,62 +113,47 @@ export function WarningModal({ warning, onClose, onSave }: WarningModalProps) {
   ];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-      onClick={onClose}
-      role="presentation"
-    >
-      <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-      >
-        
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="scrollbar-hide max-h-[90vh] max-w-lg overflow-y-auto rounded-2xl border-white/10 bg-zinc-950 p-6 sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-white">
             {warning ? 'Editar aviso' : 'Novo aviso'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1 text-zinc-500 transition hover:text-white"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+          </DialogTitle>
+          <DialogDescription className="text-sm text-zinc-400">
+            Comunicados aparecem nas plataformas conforme o público selecionado.
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+          <div className="space-y-1.5">
+            <Label htmlFor="warning-title" className="text-xs text-zinc-400">
               Título
-            </label>
-            <input
-              type="text"
+            </Label>
+            <Input
+              id="warning-title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="Ex: Treino cancelado nesta sexta"
-              className="w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-red-500/50"
+              className="h-10 rounded-xl border-white/10 bg-zinc-900 px-4 text-sm text-white placeholder:text-zinc-600"
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-400">
+          <div className="space-y-1.5">
+            <Label htmlFor="warning-content" className="text-xs text-zinc-400">
               Mensagem
-            </label>
-            <textarea
+            </Label>
+            <Textarea
+              id="warning-content"
               value={content}
               onChange={(event) => setContent(event.target.value)}
               rows={5}
               placeholder="Escreva o comunicado para alunos e/ou professores..."
-              className="w-full resize-none rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-red-500/50"
+              className="resize-none rounded-xl border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-white placeholder:text-zinc-600"
             />
           </div>
 
-          <div>
-            <label className="mb-2 block text-xs font-medium text-zinc-400">
-              Tipo do aviso
-            </label>
+          <div className="space-y-2">
+            <Label className="text-xs text-zinc-400">Tipo do aviso</Label>
             <div className="flex flex-wrap gap-2">
               {typeOptions.map(({ value, label, Icon }) => (
                 <button
@@ -164,10 +173,8 @@ export function WarningModal({ warning, onClose, onSave }: WarningModalProps) {
             </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-xs font-medium text-zinc-400">
-              Visível para
-            </label>
+          <div className="space-y-2">
+            <Label className="text-xs text-zinc-400">Visível para</Label>
             <div className="flex flex-wrap gap-2">
               {visibilityOptions.map(({ value, label, Icon }) => (
                 <button
@@ -187,64 +194,41 @@ export function WarningModal({ warning, onClose, onSave }: WarningModalProps) {
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-zinc-900/60 p-4 space-y-3">
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
-              <input
-                type="checkbox"
-                checked={publishNow}
-                onChange={(event) => setPublishNow(event.target.checked)}
-                className="rounded border-white/20 bg-zinc-900"
-              />
-              Publicar imediatamente
-            </label>
-
-            {!publishNow && (
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-zinc-400">
-                  Data de publicação
-                </label>
-                <input
-                  type="datetime-local"
-                  value={publishedAt}
-                  onChange={(event) => setPublishedAt(event.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none focus:border-red-500/50"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-400">
-                Expira em <span className="text-zinc-600">(opcional)</span>
-              </label>
-              <input
-                type="datetime-local"
-                value={expiresAt}
-                onChange={(event) => setExpiresAt(event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none focus:border-red-500/50"
-              />
-            </div>
+          <div className="space-y-1.5 rounded-xl border border-white/10 bg-zinc-900/60 p-4">
+            <Label className="text-xs text-zinc-400">
+              Vigência do aviso
+            </Label>
+            <DateRangePicker
+              value={range}
+              onChange={setRange}
+              placeholder="Início → expiração"
+            />
+            <p className="text-[11px] leading-5 text-zinc-500">
+              Selecione a data de publicação e a data em que o aviso será
+              removido automaticamente. Sem período → salvo como rascunho.
+            </p>
           </div>
         </div>
 
-        <div className="mt-6 flex gap-3">
-          <button
+        <div className="mt-2 flex gap-3">
+          <Button
             type="button"
-            onClick={onClose}
-            className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm text-zinc-400 transition hover:border-white/20 hover:text-white"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="h-10 flex-1 rounded-xl border-white/10 bg-transparent text-sm text-zinc-400 hover:bg-zinc-900 hover:text-white"
           >
             Cancelar
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={handleSave}
             disabled={isPending}
-            className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+            className="h-10 flex-1 rounded-xl bg-red-600 text-sm font-semibold text-white hover:bg-red-500"
           >
             {isPending ? 'Salvando...' : 'Salvar aviso'}
-          </button>
+          </Button>
         </div>
-
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
