@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import {
+  AppRole,
   EnrollmentStatus,
   Gender,
   StudentGoal,
@@ -14,11 +15,13 @@ import {
   createStudentSchema,
   type CreateStudentSchema,
 } from '@/modules/students/schemas/create-student-schema';
+import { provisionUserAccount } from '@/modules/users/lib/provision-user-account';
 
 type CreateStudentActionResult = {
   success: boolean;
   message: string;
   studentId?: string;
+  emailSent?: boolean;
 };
 
 const genderMap: Record<string, Gender> = {
@@ -128,6 +131,7 @@ export const createStudentAction = async (
       };
 
     const normalizedPhone = parsed.data.phone.replace(/\D/g, '');
+    const normalizedEmail = parsed.data.email.trim().toLowerCase();
     const mappedGender = genderMap[parsed.data.gender];
     const mappedStatus = statusMap[parsed.data.status];
     const mappedGoal = goalMap[parsed.data.goal];
@@ -135,15 +139,44 @@ export const createStudentAction = async (
     const hasPreviousExperience = parsed.data.studentHistoryType === 'existing';
     const progressionStartDate = new Date(parsed.data.progressionStartDate);
 
+    // Provisiona a conta de acesso ANTES de iniciar a transação para evitar
+    // que o tempo de hash/envio de email estoure o timeout da transação Postgres.
+    // Só cria conta quando o aluno entra como ACTIVE ou TRIAL — leads não recebem
+    // login até o status mudar.
+    const shouldProvisionAccess =
+      mappedStatus === StudentStatus.ACTIVE ||
+      mappedStatus === StudentStatus.TRIAL;
+
+    const provisioning = shouldProvisionAccess
+      ? await provisionUserAccount({
+          fullName: parsed.data.fullName,
+          email: normalizedEmail,
+          academyId: academy.id,
+          role: AppRole.STUDENT,
+          portalPath: '/aluno',
+          welcomeRole: 'STUDENT',
+        })
+      : null;
+
+    if (provisioning && !provisioning.success) {
+      return {
+        success: false,
+        message:
+          provisioning.message ??
+          'Não foi possível criar o acesso do aluno.',
+      };
+    }
+
     const student = await db.$transaction(async (tx) => {
       // 1. Cria o aluno
       const createdStudent = await tx.student.create({
         data: {
           academyId: academy.id,
+          userId: provisioning?.userId ?? null,
           fullName: parsed.data.fullName,
           preferredName: parsed.data.preferredName || null,
           birthDate: parsed.data.birthDate,
-          email: parsed.data.email,
+          email: normalizedEmail,
           phone: normalizedPhone,
           gender: mappedGender,
           status: mappedStatus,
@@ -223,12 +256,28 @@ export const createStudentAction = async (
     revalidatePath('/admin/alunos');
     revalidatePath('/admin/financeiro');
 
+    const baseMessage = plan
+      ? 'Aluno salvo e plano vinculado com sucesso.'
+      : 'Aluno salvo com sucesso no banco.';
+
+    let accessSuffix: string;
+    if (!provisioning) {
+      accessSuffix = ' Acesso de aluno será criado quando o status virar Ativo.';
+    } else if (provisioning.reusedExisting) {
+      accessSuffix =
+        ' Este email já tinha cadastro no sistema — o aluno usa o mesmo login e senha do acesso existente.';
+    } else if (provisioning.emailSent) {
+      accessSuffix = ' Email com acesso provisório enviado.';
+    } else {
+      accessSuffix =
+        ' Acesso criado, mas o email de boas-vindas não pôde ser enviado.';
+    }
+
     return {
       success: true,
-      message: plan
-        ? 'Aluno salvo e plano vinculado com sucesso.'
-        : 'Aluno salvo com sucesso no banco.',
+      message: `${baseMessage}${accessSuffix}`,
       studentId: student.id,
+      emailSent: provisioning?.emailSent ?? false,
     };
   } catch (error) {
     console.error('createStudentAction error', error);

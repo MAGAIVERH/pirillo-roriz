@@ -3,8 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { AppRole } from '@/generated/prisma/client';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
+import { provisionUserAccount } from '@/modules/users/lib/provision-user-account';
 
 const createInstructorSchema = z.object({
   fullName: z
@@ -69,10 +71,31 @@ export const createInstructorAction = async (input: CreateInstructorInput) => {
       };
     }
 
+    const fullName = parsed.data.fullName.trim();
+
+    const provisioning = await provisionUserAccount({
+      fullName,
+      email: normalizedEmail,
+      academyId: academy.id,
+      role: AppRole.INSTRUCTOR,
+      portalPath: '/professor',
+      welcomeRole: 'INSTRUCTOR',
+    });
+
+    if (!provisioning.success) {
+      return {
+        success: false,
+        message:
+          provisioning.message ??
+          'Não foi possível criar o acesso do professor.',
+      };
+    }
+
     await db.instructor.create({
       data: {
         academyId: academy.id,
-        fullName: parsed.data.fullName.trim(),
+        userId: provisioning.userId,
+        fullName,
         birthDate: new Date(parsed.data.birthDate),
         email: normalizedEmail,
         phone: normalizedPhone,
@@ -85,9 +108,16 @@ export const createInstructorAction = async (input: CreateInstructorInput) => {
 
     revalidatePath('/admin/professores');
 
+    const baseMessage = 'Professor cadastrado com sucesso.';
+    const accessSuffix = provisioning.reusedExisting
+      ? ' Este email já tinha cadastro no sistema — o professor usa o mesmo login e senha do acesso existente.'
+      : provisioning.emailSent
+        ? ' Email com acesso provisório enviado.'
+        : ' Acesso criado, mas o email de boas-vindas não pôde ser enviado.';
+
     return {
       success: true,
-      message: 'Professor cadastrado com sucesso.',
+      message: `${baseMessage}${accessSuffix}`,
     };
   } catch (error) {
     console.error('createInstructorAction error', error);
