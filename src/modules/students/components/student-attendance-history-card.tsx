@@ -408,12 +408,16 @@ export const StudentAttendanceHistoryCard = ({
   };
 
   return (
-    <Card className='border-white/10 bg-zinc-950 text-white'>
-      <CardHeader>
-        <CardTitle className='text-xl'>Calendário de presença</CardTitle>
+    <Card className='min-w-0 overflow-hidden border-white/10 bg-zinc-950 text-white'>
+      <CardHeader className='p-4 sm:p-6'>
+        <CardTitle className='text-lg sm:text-xl'>Calendário de presença</CardTitle>
+        <p className='text-sm leading-6 text-zinc-400'>
+          Lance presenças retroativas e acompanhe a jornada até a próxima
+          graduação.
+        </p>
       </CardHeader>
 
-      <CardContent className='space-y-6'>
+      <CardContent className='min-w-0 space-y-6 p-4 pt-0 sm:p-6 sm:pt-0'>
         {showBatchControls ? (
           <div className='w-full rounded-2xl border border-white/10 bg-zinc-900 p-4'>
             <div className='space-y-4'>
@@ -423,15 +427,15 @@ export const StudentAttendanceHistoryCard = ({
                 </div>
 
                 <div className='min-w-0 space-y-1'>
-                  <p className='text-sm font-medium leading-6 text-white'>
+                  <p className='text-sm font-medium leading-6 break-words text-white'>
                     {selectedDates.length === 0
                       ? 'Selecione as datas retroativas do atleta para contabilizar a frequência na próxima graduação.'
                       : selectedDates.length === 1 && selectedDate
-                      ? `1 data selecionada: ${format(
-                          selectedDate,
-                          'dd/MM/yyyy',
-                        )}`
-                      : `${selectedDates.length} datas selecionadas para aplicação em lote.`}
+                        ? `1 data selecionada: ${format(
+                            selectedDate,
+                            'dd/MM/yyyy',
+                          )}`
+                        : `${selectedDates.length} datas selecionadas para aplicação em lote.`}
                   </p>
 
                   <p className='text-xs text-zinc-400'>
@@ -441,136 +445,149 @@ export const StudentAttendanceHistoryCard = ({
                 </div>
               </div>
 
-              <div className='flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-zinc-950 px-3 py-2'>
+              <div className='flex flex-col gap-2 rounded-xl border border-white/10 bg-zinc-950 px-3 py-2 sm:flex-row sm:items-center sm:justify-between'>
                 <p className='text-xs font-medium uppercase tracking-wide text-zinc-400'>
                   Status atual
                 </p>
 
                 <Badge
                   variant='outline'
-                  className='border-white/10 bg-zinc-900 text-zinc-200'
+                  className='w-fit border-white/10 bg-zinc-900 text-zinc-200'
                 >
                   {selectedDates.length > 1
                     ? 'Aplicação em lote'
                     : selectedAttendance
-                    ? statusLabelMap[selectedAttendance.status] ??
-                      selectedAttendance.status
-                    : 'Sem lançamento'}
+                      ? (statusLabelMap[selectedAttendance.status] ??
+                        selectedAttendance.status)
+                      : 'Sem lançamento'}
                 </Badge>
               </div>
             </div>
           </div>
         ) : null}
 
-        <div className='grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]'>
-          <div className='rounded-2xl border border-white/10 bg-zinc-900 p-4'>
-            <Calendar
-              mode='multiple'
-              selected={selectedDates}
-              onSelect={handleSelectedDatesChange}
-              locale={ptBR}
-              disabled={[
-                { after: today },
-                ...(minDate ? [{ before: minDate }] : []),
-              ]}
-              className='w-full rounded-md bg-zinc-900 text-white'
-              modifiers={{
-                present: presentDates,
-                absent: absentDates,
-                late: lateDates,
-                excused: excusedDates,
-              }}
-              modifiersClassNames={{
-                present:
-                  'bg-emerald-500/20 text-emerald-300 font-semibold hover:bg-emerald-500/30',
-                absent:
-                  'bg-red-500/20 text-red-300 font-semibold hover:bg-red-500/30',
-                late: 'bg-amber-500/20 text-amber-300 font-semibold hover:bg-amber-500/30',
-                excused:
-                  'bg-sky-500/20 text-sky-300 font-semibold hover:bg-sky-500/30',
-              }}
-              components={{
-                DayButton: AttendanceCalendarDayButton,
-              }}
-            />
+        <div className='grid min-w-0 gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:items-start'>
+          <section className='min-w-0 space-y-4 lg:sticky lg:top-24'>
+            <div className='rounded-2xl border border-white/10 bg-zinc-900 p-3 sm:p-4'>
+              <p className='mb-3 text-sm font-medium text-white'>
+                Lançamento manual
+              </p>
 
-            <div className='mt-4 rounded-xl border border-dashed border-white/10 bg-zinc-950/60 p-3 text-sm text-zinc-400'>
-              {selectedDates.length === 0
-                ? 'Nenhuma data selecionada.'
-                : selectedDates.length === 1
-                ? `1 data selecionada: ${format(
-                    selectedDates[0],
-                    'dd/MM/yyyy',
-                  )}`
-                : `${selectedDates.length} datas selecionadas para aplicação em lote.`}
-            </div>
+              <div className='flex justify-center overflow-hidden'>
+                <Calendar
+                  mode='multiple'
+                  selected={selectedDates}
+                  onSelect={handleSelectedDatesChange}
+                  locale={ptBR}
+                  disabled={[
+                    { after: today },
+                    ...(minDate ? [{ before: minDate }] : []),
+                  ]}
+                  className='w-full max-w-full rounded-md bg-zinc-900 text-white'
+                  modifiers={{
+                    present: presentDates,
+                    absent: absentDates,
+                    late: lateDates,
+                    excused: excusedDates,
+                  }}
+                  modifiersClassNames={{
+                    present:
+                      'bg-emerald-500/20 text-emerald-300 font-semibold hover:bg-emerald-500/30',
+                    absent:
+                      'bg-red-500/20 text-red-300 font-semibold hover:bg-red-500/30',
+                    late: 'bg-amber-500/20 text-amber-300 font-semibold hover:bg-amber-500/30',
+                    excused:
+                      'bg-sky-500/20 text-sky-300 font-semibold hover:bg-sky-500/30',
+                  }}
+                  components={{
+                    DayButton: AttendanceCalendarDayButton,
+                  }}
+                />
+              </div>
 
-            <div className='mt-3 rounded-xl border border-white/10 bg-zinc-950/60 p-3 text-xs text-zinc-400'>
-              {baseDateLabel
-                ? `Lançamentos permitidos de ${baseDateLabel} até hoje.`
-                : 'Lançamentos permitidos até hoje.'}
-            </div>
+              {!showBatchControls ? (
+                <div className='mt-4 rounded-xl border border-dashed border-white/10 bg-zinc-950/60 p-3 text-sm text-zinc-400'>
+                  {selectedDates.length === 0
+                    ? 'Nenhuma data selecionada.'
+                    : selectedDates.length === 1
+                      ? `1 data selecionada: ${format(
+                          selectedDates[0],
+                          'dd/MM/yyyy',
+                        )}`
+                      : `${selectedDates.length} datas selecionadas para aplicação em lote.`}
+                </div>
+              ) : null}
 
-            <div className='mt-4 grid gap-3 sm:grid-cols-2'>
-              {statusButtonMap.map((item) => (
+              <div className='mt-3 rounded-xl border border-white/10 bg-zinc-950/60 p-3 text-xs text-zinc-400'>
+                {baseDateLabel
+                  ? `Lançamentos permitidos de ${baseDateLabel} até hoje.`
+                  : 'Lançamentos permitidos até hoje.'}
+              </div>
+
+              <div className='mt-4 grid grid-cols-2 gap-2 sm:gap-3'>
+                {statusButtonMap.map((item) => (
+                  <Button
+                    key={item.value}
+                    type='button'
+                    variant='outline'
+                    disabled={
+                      isSaving || isDeleting || selectedDates.length === 0
+                    }
+                    onClick={() => handleSave(item.value)}
+                    className={cn(
+                      'h-10 border px-2 text-xs transition sm:h-11 sm:px-3 sm:text-sm',
+                      item.className,
+                    )}
+                  >
+                    {isSaving ? 'Salvando...' : item.label}
+                  </Button>
+                ))}
+              </div>
+
+              <div className='mt-3'>
                 <Button
-                  key={item.value}
                   type='button'
                   variant='outline'
                   disabled={
-                    isSaving || isDeleting || selectedDates.length === 0
+                    isSaving ||
+                    isDeleting ||
+                    !selectedAttendance ||
+                    selectedDates.length !== 1
                   }
-                  onClick={() => handleSave(item.value)}
-                  className={cn('border transition', item.className)}
+                  onClick={handleDelete}
+                  className='w-full border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
                 >
-                  {isSaving ? 'Salvando...' : item.label}
+                  <Trash2 className='mr-2 h-4 w-4' />
+                  {isDeleting ? 'Removendo...' : 'Remover lançamento'}
                 </Button>
-              ))}
+              </div>
+
+              <div className='mt-4'>
+                <p className='mb-2 text-sm text-zinc-400'>Observações</p>
+
+                <Textarea
+                  value={notes}
+                  onChange={(event) => setNotes(event.target.value)}
+                  disabled={!canEditNotes}
+                  placeholder={
+                    !canEditNotes
+                      ? 'Selecione apenas 1 dia para adicionar observação'
+                      : 'Observação opcional para este dia'
+                  }
+                  className='min-h-24 border-white/10 bg-zinc-950 text-white placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-28'
+                />
+                <p className='mt-2 text-xs text-zinc-500'>
+                  {canEditNotes
+                    ? 'A observação será vinculada somente ao dia selecionado.'
+                    : 'Para evitar confusão, observações só podem ser lançadas com 1 dia selecionado.'}
+                </p>
+              </div>
             </div>
+          </section>
 
-            <div className='mt-3'>
-              <Button
-                type='button'
-                variant='outline'
-                disabled={
-                  isSaving ||
-                  isDeleting ||
-                  !selectedAttendance ||
-                  selectedDates.length !== 1
-                }
-                onClick={handleDelete}
-                className='w-full border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
-              >
-                <Trash2 className='mr-2 h-4 w-4' />
-                {isDeleting ? 'Removendo...' : 'Remover lançamento'}
-              </Button>
-            </div>
-
-            <div className='mt-4'>
-              <p className='mb-2 text-sm text-zinc-400'>Observações</p>
-
-              <Textarea
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                disabled={!canEditNotes}
-                placeholder={
-                  !canEditNotes
-                    ? 'Selecione apenas 1 dia para adicionar observação'
-                    : 'Observação opcional para este dia'
-                }
-                className='min-h-28 border-white/10 bg-zinc-950 text-white placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-60'
-              />
-              <p className='mt-2 text-xs text-zinc-500'>
-                {canEditNotes
-                  ? 'A observação será vinculada somente ao dia selecionado.'
-                  : 'Para evitar confusão, observações só podem ser lançadas com 1 dia selecionado.'}
-              </p>
-            </div>
-          </div>
-
-          <div className='space-y-4'>
-            <div className='rounded-2xl border border-white/10 bg-zinc-900 p-4'>
-              <div className='space-y-2'>
+          <section className='min-w-0 space-y-4'>
+            <div className='rounded-2xl border border-white/10 bg-zinc-900 p-3 sm:p-4'>
+              <div className='space-y-1'>
                 <p className='text-sm font-medium text-white'>
                   Consistência de treino
                 </p>
@@ -579,41 +596,43 @@ export const StudentAttendanceHistoryCard = ({
                 </p>
               </div>
 
-              <div className='mt-4 rounded-xl border border-white/10 bg-zinc-950 p-4'>
-                <div className='flex items-center justify-between gap-3 text-xs text-zinc-400'>
-                  <span>Data base</span>
+              <div className='mt-4 rounded-xl border border-white/10 bg-zinc-950 p-3 sm:p-4'>
+                <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                  <span className='text-xs text-zinc-400'>Data base</span>
                   <Badge
                     variant='outline'
-                    className='border-white/10 bg-zinc-900 text-zinc-200'
+                    className='w-fit border-white/10 bg-zinc-900 text-zinc-200'
                   >
                     {progressPercentage}% da jornada
                   </Badge>
-                  <span>Próxima graduação</span>
+                  <span className='text-xs text-zinc-400 sm:text-right'>
+                    Próxima graduação
+                  </span>
                 </div>
 
-                <div className='mt-3 flex items-center gap-3'>
-                  <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-900 text-sm'>
+                <div className='mt-3 flex items-center gap-2 sm:gap-3'>
+                  <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-900 text-sm sm:h-9 sm:w-9'>
                     🥋
                   </div>
 
-                  <div className='h-3 flex-1 overflow-hidden rounded-full bg-zinc-800'>
+                  <div className='h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-zinc-800 sm:h-3'>
                     <div
                       className='h-full rounded-full bg-emerald-500 transition-all'
                       style={{ width: `${progressPercentage}%` }}
                     />
                   </div>
 
-                  <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-900 text-sm'>
+                  <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-zinc-900 text-sm sm:h-9 sm:w-9'>
                     🏆
                   </div>
                 </div>
 
-                <div className='mt-3 flex items-center justify-between text-xs text-zinc-400'>
-                  <span>{baseDateLabel ?? 'Data base'}</span>
-                  <span>{projectedDateLabel}</span>
+                <div className='mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-400'>
+                  <span className='truncate'>{baseDateLabel ?? 'Data base'}</span>
+                  <span className='truncate text-right'>{projectedDateLabel}</span>
                 </div>
 
-                <div className='mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
+                <div className='mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3'>
                   <div className='rounded-xl border border-white/10 bg-zinc-900 px-3 py-2'>
                     <p className='text-[11px] uppercase tracking-wide text-zinc-500'>
                       Presenças
@@ -651,45 +670,58 @@ export const StudentAttendanceHistoryCard = ({
                   </div>
                 </div>
 
-                <div className='mt-3 text-xs text-zinc-400'>
+                <div className='mt-3 text-xs leading-5 text-zinc-400'>
                   {elapsedProgressDays} dias percorridos desde a data base •{' '}
                   {remainingDays} dias restantes estimados
                 </div>
               </div>
 
-              <div className='mt-4 rounded-xl border border-white/10 bg-zinc-950 p-4'>
-                <div className='flex items-center justify-between gap-3'>
+              <div className='mt-4 min-w-0 rounded-xl border border-white/10 bg-zinc-950 p-3 sm:p-4'>
+                <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
                   <p className='text-xs font-medium uppercase tracking-wide text-zinc-400'>
                     Heatmap da jornada
                   </p>
 
-                  <div className='flex items-center gap-2 text-[11px] text-zinc-500'>
-                    <span>Legenda</span>
-                    <span className='h-3 w-3 rounded-[3px] bg-emerald-500/70' />
-                    <span className='h-3 w-3 rounded-[3px] bg-red-500/70' />
-                    <span className='h-3 w-3 rounded-[3px] bg-amber-500/70' />
-                    <span className='h-3 w-3 rounded-[3px] bg-sky-500/70' />
+                  <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-zinc-500 sm:text-[11px]'>
+                    <span className='flex items-center gap-1'>
+                      <span className='h-2.5 w-2.5 rounded-[2px] bg-emerald-500/70' />
+                      Presente
+                    </span>
+                    <span className='flex items-center gap-1'>
+                      <span className='h-2.5 w-2.5 rounded-[2px] bg-red-500/70' />
+                      Falta
+                    </span>
+                    <span className='flex items-center gap-1'>
+                      <span className='h-2.5 w-2.5 rounded-[2px] bg-amber-500/70' />
+                      Atraso
+                    </span>
+                    <span className='flex items-center gap-1'>
+                      <span className='h-2.5 w-2.5 rounded-[2px] bg-sky-500/70' />
+                      Justif.
+                    </span>
                   </div>
                 </div>
 
-                <div className='mt-4 flex gap-3'>
-                  <div className='shrink-0 pr-2 text-[11px] text-zinc-500'>
-                    <div className='mb-2 h-4' />
+                <p className='mt-2 text-[10px] text-zinc-500 lg:hidden'>
+                  Deslize horizontalmente para ver toda a jornada.
+                </p>
 
-                    <div className='grid auto-rows-[16px] gap-2'>
-                      <span className='flex h-4 items-center'>D</span>
-                      <span className='flex h-4 items-center'>S</span>
-                      <span className='flex h-4 items-center'>T</span>
-                      <span className='flex h-4 items-center'>Q</span>
-                      <span className='flex h-4 items-center'>Q</span>
-                      <span className='flex h-4 items-center'>S</span>
-                      <span className='flex h-4 items-center'>S</span>
+                <div className='mt-3 max-w-full overflow-x-auto overscroll-x-contain'>
+                  <div className='inline-flex min-w-0 gap-2 pb-1'>
+                    <div className='shrink-0 pt-5 text-[10px] text-zinc-500 sm:text-[11px]'>
+                      <div className='grid auto-rows-[12px] gap-1 sm:auto-rows-[14px] sm:gap-1.5'>
+                        <span className='flex h-3 items-center sm:h-3.5'>D</span>
+                        <span className='flex h-3 items-center sm:h-3.5'>S</span>
+                        <span className='flex h-3 items-center sm:h-3.5'>T</span>
+                        <span className='flex h-3 items-center sm:h-3.5'>Q</span>
+                        <span className='flex h-3 items-center sm:h-3.5'>Q</span>
+                        <span className='flex h-3 items-center sm:h-3.5'>S</span>
+                        <span className='flex h-3 items-center sm:h-3.5'>S</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className='overflow-x-auto pb-2 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-                    <div className='min-w-max'>
-                      <div className='mb-2 grid grid-flow-col auto-cols-[16px] gap-2 text-[11px] text-zinc-500'>
+                    <div className='min-w-0'>
+                      <div className='mb-1.5 grid grid-flow-col auto-cols-[12px] gap-1 text-[10px] text-zinc-500 sm:auto-cols-[14px] sm:gap-1.5 sm:text-[11px]'>
                         {Array.from({
                           length: Math.ceil(heatmapDays.length / 7),
                         }).map((_, columnIndex) => {
@@ -709,7 +741,10 @@ export const StudentAttendanceHistoryCard = ({
                             columnIndex === 0 || currentMonth !== previousMonth;
 
                           return (
-                            <div key={`month-${columnIndex}`}>
+                            <div
+                              key={`month-${columnIndex}`}
+                              className='h-4 truncate'
+                            >
                               {shouldShowMonth && firstDay
                                 ? format(
                                     new Date(`${firstDay.dateKey}T12:00:00`),
@@ -722,7 +757,7 @@ export const StudentAttendanceHistoryCard = ({
                         })}
                       </div>
 
-                      <div className='grid grid-flow-col auto-cols-[16px] gap-2'>
+                      <div className='grid grid-flow-col auto-cols-[12px] gap-1 sm:auto-cols-[14px] sm:gap-1.5'>
                         {Array.from({
                           length: Math.ceil(heatmapDays.length / 7),
                         }).map((_, columnIndex) => {
@@ -734,7 +769,7 @@ export const StudentAttendanceHistoryCard = ({
                           return (
                             <div
                               key={`heatmap-column-${columnIndex}`}
-                              className='flex flex-col gap-2'
+                              className='flex flex-col gap-1 sm:gap-1.5'
                             >
                               {columnDays.map((day) => (
                                 <TooltipProvider
@@ -745,7 +780,7 @@ export const StudentAttendanceHistoryCard = ({
                                     <TooltipTrigger asChild>
                                       <div
                                         className={cn(
-                                          'h-4 w-4 rounded-[3px] border border-white/5 transition',
+                                          'h-3 w-3 rounded-[2px] border border-white/5 transition sm:h-3.5 sm:w-3.5',
                                           getStatusHeatmapClassName(day.status),
                                         )}
                                       />
@@ -775,7 +810,7 @@ export const StudentAttendanceHistoryCard = ({
               </div>
             </div>
 
-            <div className='rounded-2xl border border-white/10 bg-zinc-900 p-4'>
+            <div className='rounded-2xl border border-white/10 bg-zinc-900 p-3 sm:p-4'>
               <p className='mb-3 text-sm font-medium text-white'>
                 Últimos lançamentos
               </p>
@@ -791,7 +826,11 @@ export const StudentAttendanceHistoryCard = ({
                       <p className='mt-1 text-sm text-zinc-400'>
                         {statusLabelMap[item.status] ?? item.status}
                       </p>
-                      <p className='mt-1 text-xs text-zinc-500'>{item.notes}</p>
+                      {item.notes && item.notes !== '-' ? (
+                        <p className='mt-1 text-xs leading-5 break-words text-zinc-500'>
+                          {item.notes}
+                        </p>
+                      ) : null}
                     </div>
                   ))
                 ) : (
@@ -801,7 +840,7 @@ export const StudentAttendanceHistoryCard = ({
                 )}
               </div>
             </div>
-          </div>
+          </section>
         </div>
       </CardContent>
     </Card>
