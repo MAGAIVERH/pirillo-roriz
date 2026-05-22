@@ -14,7 +14,6 @@ import {
   Wallet,
 } from 'lucide-react';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Sidebar,
   SidebarContent,
@@ -29,6 +28,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { AdminUserMenu } from '@/modules/auth/components/admin-user-menu';
 
 const navigation = [
   { label: 'Dashboard', href: '/admin', icon: Home },
@@ -50,15 +50,18 @@ const getIsActive = (pathname: string, href: string) => {
   return pathname === href || pathname.startsWith(`${href}/`);
 };
 
-export const AdminSidebar = () => {
+type AdminSidebarProps = {
+  user: {
+    name: string;
+    email: string;
+  };
+};
+
+export const AdminSidebar = ({ user }: AdminSidebarProps) => {
   const pathname = usePathname();
   const { state } = useSidebar();
 
   const isCollapsed = state === 'collapsed';
-
-  const adminName = 'Admin Master';
-  const adminEmail = 'admin@academia.com';
-  const adminInitial = adminName.charAt(0).toUpperCase();
 
   return (
     <Sidebar
@@ -130,28 +133,7 @@ export const AdminSidebar = () => {
       </SidebarContent>
 
       <SidebarFooter className='border-t border-white/10 p-2'>
-        <div
-          className={`rounded-xl border border-white/10 bg-zinc-900 ${
-            isCollapsed
-              ? 'flex justify-center px-2 py-3'
-              : 'flex items-center gap-3 px-3 py-3'
-          }`}
-        >
-          <Avatar className='h-10 w-10 border border-white/10'>
-            <AvatarFallback className='bg-zinc-950 text-sm font-semibold text-white'>
-              {adminInitial}
-            </AvatarFallback>
-          </Avatar>
-
-          {!isCollapsed ? (
-            <div className='min-w-0'>
-              <p className='truncate text-sm font-medium text-white'>
-                {adminName}
-              </p>
-              <p className='truncate text-xs text-zinc-400'>{adminEmail}</p>
-            </div>
-          ) : null}
-        </div>
+        <AdminUserMenu user={user} isCollapsed={isCollapsed} />
       </SidebarFooter>
 
       <SidebarRail />

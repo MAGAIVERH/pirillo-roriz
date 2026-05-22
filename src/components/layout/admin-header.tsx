@@ -4,7 +4,11 @@ import { Bell, Search } from 'lucide-react';
 
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
-export const AdminHeader = () => {
+type AdminHeaderProps = {
+  userName: string;
+};
+
+export const AdminHeader = ({ userName }: AdminHeaderProps) => {
   return (
     <header className='border-b border-white/10 bg-black/70 backdrop-blur'>
       <div className='flex h-23 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8'>
@@ -33,7 +37,7 @@ export const AdminHeader = () => {
           </button>
 
           <div className='flex h-11 items-center rounded-xl border border-white/10 bg-zinc-950 px-4 text-sm text-zinc-300'>
-            Admin Master
+            {userName}
           </div>
         </div>
       </div>
