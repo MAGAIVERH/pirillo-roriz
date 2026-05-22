@@ -26,6 +26,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { AdminUserMenu } from '@/modules/auth/components/admin-user-menu';
@@ -59,44 +60,61 @@ type AdminSidebarProps = {
 
 export const AdminSidebar = ({ user }: AdminSidebarProps) => {
   const pathname = usePathname();
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
 
-  const isCollapsed = state === 'collapsed';
+  const isCollapsed = !isMobile && state === 'collapsed';
+
+  const handleNavigate = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar
       collapsible='icon'
-      className='border-r border-white/10 bg-zinc-950 text-white'
+      className='border-r border-white/10 bg-zinc-950 text-white **:data-[slot=sidebar-inner]:bg-zinc-950'
     >
-      <SidebarHeader className='border-b border-white/10 p-0'>
+      <SidebarHeader className='border-b border-white/10 bg-zinc-950 p-0'>
         <div
           className={`flex h-23 items-center ${
-            isCollapsed ? 'justify-center px-2' : 'justify-between px-4'
+            isCollapsed ? 'justify-center px-2' : 'justify-between gap-3 px-4'
           }`}
         >
           <div
-            className={`flex items-center ${
+            className={`flex min-w-0 items-center ${
               isCollapsed ? 'justify-center' : 'gap-3'
             }`}
           >
-            <div className='flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-zinc-900 text-xl'>
+            <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-zinc-900 text-xl'>
               🥋
             </div>
 
             {!isCollapsed ? (
-              <div className='space-y-1'>
+              <div className='min-w-0 space-y-0.5'>
                 <p className='text-xs font-semibold uppercase tracking-[0.2em] text-red-500'>
                   Academia
                 </p>
-                <h2 className='text-2xl font-bold text-white'>Jiu Jitsu</h2>
-                <p className='text-sm text-zinc-400'>Painel administrativo</p>
+                <h2 className='truncate text-lg font-bold text-white sm:text-2xl'>
+                  Jiu Jitsu
+                </h2>
+                <p className='truncate text-xs text-zinc-400 sm:text-sm'>
+                  Painel administrativo
+                </p>
               </div>
             ) : null}
           </div>
+
+          {isMobile ? (
+            <SidebarTrigger
+              aria-label='Fechar menu'
+              className='h-10 w-10 shrink-0 rounded-xl border border-white/10 bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 hover:text-white sm:h-11 sm:w-11'
+            />
+          ) : null}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className='px-2 py-4'>
+      <SidebarContent className='bg-zinc-950 px-2 py-4'>
         <SidebarGroup>
           {!isCollapsed ? (
             <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
@@ -119,7 +137,7 @@ export const AdminSidebar = ({ user }: AdminSidebarProps) => {
                           : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
                       }
                     >
-                      <Link href={href}>
+                      <Link href={href} onClick={handleNavigate}>
                         <Icon className='h-4 w-4' />
                         {!isCollapsed ? <span>{label}</span> : null}
                       </Link>
@@ -132,7 +150,7 @@ export const AdminSidebar = ({ user }: AdminSidebarProps) => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className='border-t border-white/10 p-2'>
+      <SidebarFooter className='border-t border-white/10 bg-zinc-950 p-2'>
         <AdminUserMenu user={user} isCollapsed={isCollapsed} />
       </SidebarFooter>
 
