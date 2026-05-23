@@ -1,4 +1,14 @@
-import { addDays, format, isAfter, isWithinInterval, startOfDay, startOfWeek } from 'date-fns';
+import {
+  addDays,
+  endOfDay,
+  format,
+  isAfter,
+  isWithinInterval,
+  startOfDay,
+  startOfWeek,
+  subWeeks,
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
@@ -12,30 +22,45 @@ import type {
 } from '../types/analytics';
 
 const ATTENDANCE_WINDOW_DAYS = 30;
+const HEATMAP_WEEKS = 16;
 
-function buildCalendarWeeks(
+function getWeekLabel(weekStart: Date): string {
+  for (let offset = 0; offset < 7; offset += 1) {
+    const day = addDays(weekStart, offset);
+
+    if (day.getDate() === 1) {
+      return format(day, 'MMM', { locale: ptBR });
+    }
+  }
+
+  return format(weekStart, 'd', { locale: ptBR });
+}
+
+function buildRollingCalendarWeeks(
+  windowStart: Date,
+  windowEnd: Date,
   periodStart: Date,
   periodEnd: Date,
   checkInsByDate: Map<string, number>,
-  referenceNow: Date,
-  isCurrentMonth: boolean,
+  today: Date,
+  isLiveWindow: boolean,
 ): PresenceCalendarWeek[] {
-  const today = startOfDay(referenceNow);
   const weeks: PresenceCalendarWeek[] = [];
-  let weekStart = startOfWeek(periodStart, { weekStartsOn: 0 });
+  let weekStart = startOfWeek(windowStart, { weekStartsOn: 0 });
   let weekIndex = 0;
 
-  while (weekStart <= periodEnd) {
+  while (weekStart <= windowEnd) {
     const days: PresenceCalendarDay[] = [];
 
     for (let offset = 0; offset < 7; offset += 1) {
       const day = addDays(weekStart, offset);
       const dateKey = format(day, 'yyyy-MM-dd');
+      const isInWindow = day >= windowStart && day <= windowEnd;
       const inMonth = isWithinInterval(day, {
         start: periodStart,
         end: periodEnd,
       });
-      const isFuture = isCurrentMonth && isAfter(day, today);
+      const isFuture = isLiveWindow && isAfter(day, today);
       const isToday = dateKey === format(today, 'yyyy-MM-dd');
 
       days.push({
@@ -43,29 +68,22 @@ function buildCalendarWeeks(
         dayOfMonth: day.getDate(),
         weekDay: day.getDay(),
         checkIns:
-          inMonth && !isFuture ? (checkInsByDate.get(dateKey) ?? 0) : 0,
+          isInWindow && !isFuture ? (checkInsByDate.get(dateKey) ?? 0) : 0,
         inMonth,
-        isFuture: inMonth && isFuture,
+        isInWindow,
+        isFuture: isInWindow && isFuture,
         isToday,
       });
     }
 
-    if (days.some((day) => day.inMonth)) {
-      const firstDayInMonth = days.find((day) => day.inMonth);
-      const lastDayInMonth = [...days].reverse().find((day) => day.inMonth);
-
-      weeks.push({
-        weekIndex,
-        label:
-          firstDayInMonth && lastDayInMonth
-            ? `${firstDayInMonth.dayOfMonth}–${lastDayInMonth.dayOfMonth}`
-            : `Sem ${weekIndex + 1}`,
-        days,
-      });
-      weekIndex += 1;
-    }
+    weeks.push({
+      weekIndex,
+      label: getWeekLabel(weekStart),
+      days,
+    });
 
     weekStart = addDays(weekStart, 7);
+    weekIndex += 1;
   }
 
   return weeks;
@@ -76,11 +94,20 @@ export async function getPresenceData(
 ): Promise<PresenceData> {
   const academy = await getOrCreateDefaultAcademy();
   const referenceNow = new Date();
+  const today = startOfDay(referenceNow);
   const isCurrentMonth =
     period.current.year === referenceNow.getFullYear() &&
     period.current.month === referenceNow.getMonth() + 1;
 
-  const [presentAttendances, activeStudents, attendanceByStudent, topClassRows] =
+  const windowEnd = startOfDay(
+    isCurrentMonth && today <= period.current.end ? today : period.current.end,
+  );
+  const windowStart = startOfWeek(
+    subWeeks(windowEnd, HEATMAP_WEEKS - 1),
+    { weekStartsOn: 0 },
+  );
+
+  const [presentAttendances, heatmapAttendances, activeStudents, attendanceByStudent, topClassRows] =
     await Promise.all([
       db.attendance.findMany({
         where: {
@@ -94,6 +121,23 @@ export async function getPresenceData(
               startsAt: true,
               classId: true,
               class: { select: { name: true } },
+            },
+          },
+        },
+      }),
+      db.attendance.findMany({
+        where: {
+          status: 'PRESENT',
+          createdAt: {
+            gte: windowStart,
+            lte: endOfDay(windowEnd),
+          },
+          classSession: { class: { academyId: academy.id } },
+        },
+        select: {
+          classSession: {
+            select: {
+              startsAt: true,
             },
           },
         },
@@ -136,9 +180,6 @@ export async function getPresenceData(
   for (const attendance of presentAttendances) {
     const session = attendance.classSession;
     const startsAt = session.startsAt;
-    const dateKey = format(startsAt, 'yyyy-MM-dd');
-
-    checkInsByDate.set(dateKey, (checkInsByDate.get(dateKey) ?? 0) + 1);
 
     const classBucket = classAggregate.get(session.classId);
     if (classBucket) {
@@ -153,11 +194,18 @@ export async function getPresenceData(
     }
   }
 
-  const calendarWeeks = buildCalendarWeeks(
+  for (const attendance of heatmapAttendances) {
+    const dateKey = format(attendance.classSession.startsAt, 'yyyy-MM-dd');
+    checkInsByDate.set(dateKey, (checkInsByDate.get(dateKey) ?? 0) + 1);
+  }
+
+  const calendarWeeks = buildRollingCalendarWeeks(
+    windowStart,
+    windowEnd,
     period.current.start,
     period.current.end,
     checkInsByDate,
-    referenceNow,
+    today,
     isCurrentMonth,
   );
 

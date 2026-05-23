@@ -67,6 +67,7 @@ export type PresenceCalendarDay = {
   weekDay: number;
   checkIns: number;
   inMonth: boolean;
+  isInWindow: boolean;
   isFuture: boolean;
   isToday: boolean;
 };
