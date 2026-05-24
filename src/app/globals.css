@@ -68,6 +68,47 @@ body {
   max-width: 100%;
 }
 
+/* Scroll funcional em toda a app, sem barra visual. Isso também evita o
+   layout shift dos Selects (react-remove-scroll) ao abrir dropdowns. */
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@layer base {
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
+body[data-scroll-locked] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+}
+
+body[data-scroll-locked] .right-scroll-bar-position {
+  right: 0 !important;
+}
+
+body[data-scroll-locked] .width-before-scroll-bar {
+  margin-right: 0 !important;
+}
+
 button,
 input,
 textarea,

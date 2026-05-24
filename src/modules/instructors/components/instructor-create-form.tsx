@@ -20,6 +20,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import {
+  FormField,
+  formCardClassName,
+  formCardContentClassName,
+  formCardHeaderClassName,
+  formGridClassName,
+  formInputClassName,
+  formSelectContentClassName,
+  formSelectTriggerClassName,
+} from '@/components/forms/form-field';
 import {
   CreateInstructorFormData,
   createInstructorSchema,
@@ -139,32 +150,32 @@ export const InstructorCreateForm = () => {
   };
 
   return (
-    <Card className='border-white/10 bg-zinc-950 text-white'>
-      <CardHeader>
-        <CardTitle className='text-xl'>Dados do professor</CardTitle>
+    <Card className={formCardClassName}>
+      <CardHeader className={formCardHeaderClassName}>
+        <CardTitle className='text-lg font-semibold'>Dados do professor</CardTitle>
       </CardHeader>
 
-      <CardContent className='space-y-6'>
-        <div className='grid gap-4 lg:grid-cols-2'>
-          <div className='space-y-2 lg:col-span-2'>
-            <p className='text-sm text-zinc-400'>Nome completo</p>
+      <CardContent className={cn(formCardContentClassName, 'space-y-5')}>
+        <div className={formGridClassName}>
+          <FormField
+            label='Nome completo'
+            htmlFor='fullName'
+            error={errors.fullName}
+            className='md:col-span-2'
+          >
             <Input
+              id='fullName'
               value={fullName}
               onChange={(event) => {
                 setFullName(event.target.value);
                 clearFieldError('fullName');
               }}
               placeholder='Digite o nome completo do professor'
-              className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+              className={formInputClassName}
             />
-            {errors.fullName ? (
-              <p className='text-sm text-red-400'>{errors.fullName}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          <div className='space-y-2'>
-            <p className='text-sm text-zinc-400'>Data de nascimento</p>
-
+          <FormField label='Data de nascimento' error={errors.birthDate}>
             <DateInput
               value={birthDate}
               onChange={(date) => {
@@ -177,14 +188,9 @@ export const InstructorCreateForm = () => {
               invalid={Boolean(errors.birthDate)}
               ariaLabel='Data de nascimento'
             />
+          </FormField>
 
-            {errors.birthDate ? (
-              <p className='text-sm text-red-400'>{errors.birthDate}</p>
-            ) : null}
-          </div>
-
-          <div className='space-y-2'>
-            <p className='text-sm text-zinc-400'>Status</p>
+          <FormField label='Status' error={errors.status}>
             <Select
               value={status}
               onValueChange={(value) => {
@@ -192,22 +198,19 @@ export const InstructorCreateForm = () => {
                 clearFieldError('status');
               }}
             >
-              <SelectTrigger className='border-white/10 bg-zinc-900 text-white'>
+              <SelectTrigger className={formSelectTriggerClassName}>
                 <SelectValue placeholder='Selecione o status' />
               </SelectTrigger>
-              <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+              <SelectContent className={formSelectContentClassName}>
                 <SelectItem value='ACTIVE'>Ativo</SelectItem>
                 <SelectItem value='INACTIVE'>Inativo</SelectItem>
               </SelectContent>
             </Select>
-            {errors.status ? (
-              <p className='text-sm text-red-400'>{errors.status}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          <div className='space-y-2'>
-            <p className='text-sm text-zinc-400'>Email</p>
+          <FormField label='Email' htmlFor='email' error={errors.email}>
             <Input
+              id='email'
               type='email'
               value={email}
               onChange={(event) => {
@@ -215,31 +218,24 @@ export const InstructorCreateForm = () => {
                 clearFieldError('email');
               }}
               placeholder='email@exemplo.com'
-              className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+              className={formInputClassName}
             />
-            {errors.email ? (
-              <p className='text-sm text-red-400'>{errors.email}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          <div className='space-y-2'>
-            <p className='text-sm text-zinc-400'>Telefone</p>
+          <FormField label='Telefone' htmlFor='phone' error={errors.phone}>
             <Input
+              id='phone'
               value={phone}
               onChange={(event) => {
                 setPhone(formatPhone(event.target.value));
                 clearFieldError('phone');
               }}
               placeholder='(85) 99999-9999'
-              className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+              className={formInputClassName}
             />
-            {errors.phone ? (
-              <p className='text-sm text-red-400'>{errors.phone}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          <div className='space-y-2'>
-            <p className='text-sm text-zinc-400'>Faixa</p>
+          <FormField label='Faixa' error={errors.belt}>
             <Select
               value={belt}
               onValueChange={(value) => {
@@ -247,10 +243,10 @@ export const InstructorCreateForm = () => {
                 clearFieldError('belt');
               }}
             >
-              <SelectTrigger className='border-white/10 bg-zinc-900 text-white'>
+              <SelectTrigger className={formSelectTriggerClassName}>
                 <SelectValue placeholder='Selecione a faixa' />
               </SelectTrigger>
-              <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+              <SelectContent className={formSelectContentClassName}>
                 {beltOptions.map((item) => (
                   <SelectItem key={item} value={item}>
                     {item}
@@ -258,14 +254,11 @@ export const InstructorCreateForm = () => {
                 ))}
               </SelectContent>
             </Select>
-            {errors.belt ? (
-              <p className='text-sm text-red-400'>{errors.belt}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          <div className='space-y-2'>
-            <p className='text-sm text-zinc-400'>Grau</p>
+          <FormField label='Grau' htmlFor='beltDegree' error={errors.beltDegree}>
             <Input
+              id='beltDegree'
               type='number'
               min={0}
               max={6}
@@ -275,22 +268,19 @@ export const InstructorCreateForm = () => {
                 clearFieldError('beltDegree');
               }}
               placeholder='0'
-              className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+              className={cn(formInputClassName, 'max-w-[7rem]')}
             />
-            {errors.beltDegree ? (
-              <p className='text-sm text-red-400'>{errors.beltDegree}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          <div className='space-y-2 lg:col-span-2'>
-            <p className='text-sm text-zinc-400'>Observações</p>
+          <FormField label='Observações' htmlFor='notes' className='md:col-span-2'>
             <Textarea
+              id='notes'
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               placeholder='Informações adicionais sobre o professor'
-              className='min-h-32 border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+              className='min-h-28 border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
             />
-          </div>
+          </FormField>
         </div>
 
         <div className='flex flex-col gap-3 sm:flex-row sm:justify-end'>
@@ -298,6 +288,8 @@ export const InstructorCreateForm = () => {
             type='button'
             variant='outline'
             className='border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
+            disabled={isPending}
+            onClick={() => router.push('/admin/professores')}
           >
             Cancelar
           </Button>

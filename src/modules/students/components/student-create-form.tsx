@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -19,6 +18,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import {
+  FormField,
+  formCardClassName,
+  formCardContentClassName,
+  formCardHeaderClassName,
+  formGridClassName,
+  formInputClassName,
+  formSelectContentClassName,
+  formSelectTriggerClassName,
+} from '@/components/forms/form-field';
 import {
   createStudentSchema,
   type CreateStudentSchema,
@@ -114,7 +124,6 @@ export const StudentCreateForm = ({
     name: 'progressionStartDate',
   });
 
-  // Pré-preenche o dia de vencimento quando a data base muda
   useEffect(() => {
     if (progressionStartDate) {
       form.setValue('billingDueDay', progressionStartDate.getDate());
@@ -158,37 +167,36 @@ export const StudentCreateForm = ({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-5'>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         noValidate
-        className='space-y-6'
+        className='space-y-5'
       >
-        <Card className='border-white/10 bg-zinc-950 text-white'>
-          <CardHeader>
-            <CardTitle className='text-xl'>Dados principais</CardTitle>
+        <Card className={formCardClassName}>
+          <CardHeader className={formCardHeaderClassName}>
+            <CardTitle className='text-lg font-semibold'>Dados principais</CardTitle>
           </CardHeader>
 
-          <CardContent className='grid gap-4 md:grid-cols-2'>
+          <CardContent className={cn(formCardContentClassName, formGridClassName)}>
             <Controller
               name='fullName'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2 md:col-span-2'>
-                  <Label htmlFor='fullName'>Nome completo</Label>
+                <FormField
+                  label='Nome completo'
+                  htmlFor='fullName'
+                  error={fieldState.error?.message}
+                  className='md:col-span-2'
+                >
                   <Input
                     id='fullName'
                     placeholder='Digite o nome completo do aluno'
-                    className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+                    className={formInputClassName}
                     aria-invalid={fieldState.invalid}
                     {...field}
                   />
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -196,21 +204,19 @@ export const StudentCreateForm = ({
               name='preferredName'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label htmlFor='preferredName'>Nome preferido</Label>
+                <FormField
+                  label='Nome preferido'
+                  htmlFor='preferredName'
+                  error={fieldState.error?.message}
+                >
                   <Input
                     id='preferredName'
                     placeholder='Como prefere ser chamado'
-                    className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+                    className={formInputClassName}
                     aria-invalid={fieldState.invalid}
                     {...field}
                   />
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -218,9 +224,10 @@ export const StudentCreateForm = ({
               name='birthDate'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label>Data de nascimento</Label>
-
+                <FormField
+                  label='Data de nascimento'
+                  error={fieldState.error?.message}
+                >
                   <DateInput
                     value={field.value ?? undefined}
                     onChange={(date) => field.onChange(date ?? null)}
@@ -230,13 +237,7 @@ export const StudentCreateForm = ({
                     invalid={fieldState.invalid}
                     ariaLabel='Data de nascimento'
                   />
-
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -244,22 +245,20 @@ export const StudentCreateForm = ({
               name='email'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label htmlFor='email'>Email</Label>
+                <FormField
+                  label='Email'
+                  htmlFor='email'
+                  error={fieldState.error?.message}
+                >
                   <Input
                     id='email'
                     type='email'
                     placeholder='email@exemplo.com'
-                    className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+                    className={formInputClassName}
                     aria-invalid={fieldState.invalid}
                     {...field}
                   />
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -267,26 +266,24 @@ export const StudentCreateForm = ({
               name='phone'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label htmlFor='phone'>Telefone</Label>
+                <FormField
+                  label='Telefone'
+                  htmlFor='phone'
+                  error={fieldState.error?.message}
+                >
                   <Input
                     id='phone'
                     inputMode='numeric'
                     maxLength={15}
                     placeholder='(85) 99999-9999'
-                    className='border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+                    className={cn(formInputClassName, 'max-w-none')}
                     aria-invalid={fieldState.invalid}
                     value={field.value}
                     onChange={(event) => {
                       field.onChange(formatPhone(event.target.value));
                     }}
                   />
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -294,16 +291,15 @@ export const StudentCreateForm = ({
               name='gender'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label>Sexo</Label>
+                <FormField label='Sexo' error={fieldState.error?.message}>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger
-                      className='border-white/10 bg-zinc-900 text-white'
+                      className={formSelectTriggerClassName}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder='Selecione' />
                     </SelectTrigger>
-                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                    <SelectContent className={formSelectContentClassName}>
                       <SelectItem value='male'>Masculino</SelectItem>
                       <SelectItem value='female'>Feminino</SelectItem>
                       <SelectItem value='other'>Outro</SelectItem>
@@ -312,12 +308,7 @@ export const StudentCreateForm = ({
                       </SelectItem>
                     </SelectContent>
                   </Select>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -325,52 +316,53 @@ export const StudentCreateForm = ({
               name='status'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label>Status inicial</Label>
+                <FormField
+                  label='Status inicial'
+                  error={fieldState.error?.message}
+                >
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger
-                      className='border-white/10 bg-zinc-900 text-white'
+                      className={formSelectTriggerClassName}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder='Selecione' />
                     </SelectTrigger>
-                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                    <SelectContent className={formSelectContentClassName}>
                       <SelectItem value='lead'>Lead</SelectItem>
                       <SelectItem value='trial'>Experimental</SelectItem>
                       <SelectItem value='active'>Ativo</SelectItem>
                     </SelectContent>
                   </Select>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
           </CardContent>
         </Card>
 
-        <Card className='border-white/10 bg-zinc-950 text-white'>
-          <CardHeader>
-            <CardTitle className='text-xl'>Informações de treino</CardTitle>
+        <Card className={formCardClassName}>
+          <CardHeader className={formCardHeaderClassName}>
+            <CardTitle className='text-lg font-semibold'>
+              Informações de treino
+            </CardTitle>
           </CardHeader>
 
-          <CardContent className='grid gap-4 md:grid-cols-2'>
+          <CardContent className={cn(formCardContentClassName, formGridClassName)}>
             <Controller
               name='beltId'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label>Faixa inicial</Label>
+                <FormField
+                  label='Faixa inicial'
+                  error={fieldState.error?.message}
+                >
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger
-                      className='border-white/10 bg-zinc-900 text-white'
+                      className={formSelectTriggerClassName}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder='Selecione a faixa' />
                     </SelectTrigger>
-                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                    <SelectContent className={formSelectContentClassName}>
                       {belts.map((belt) => (
                         <SelectItem key={belt.id} value={belt.id}>
                           {belt.name}
@@ -378,12 +370,7 @@ export const StudentCreateForm = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -391,16 +378,18 @@ export const StudentCreateForm = ({
               name='mainClassId'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label>Turma principal</Label>
+                <FormField
+                  label='Turma principal'
+                  error={fieldState.error?.message}
+                >
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger
-                      className='border-white/10 bg-zinc-900 text-white'
+                      className={formSelectTriggerClassName}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder='Selecione a turma' />
                     </SelectTrigger>
-                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                    <SelectContent className={formSelectContentClassName}>
                       {classes.map((item) => (
                         <SelectItem key={item.id} value={item.id}>
                           {item.name}
@@ -408,12 +397,7 @@ export const StudentCreateForm = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -421,92 +405,74 @@ export const StudentCreateForm = ({
               name='studentHistoryType'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label>Histórico do aluno</Label>
+                <FormField
+                  label='Histórico do aluno'
+                  error={fieldState.error?.message}
+                >
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger
-                      className='border-white/10 bg-zinc-900 text-white'
+                      className={formSelectTriggerClassName}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder='Selecione o tipo' />
                     </SelectTrigger>
-                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                    <SelectContent className={formSelectContentClassName}>
                       <SelectItem value='new'>Aluno novo</SelectItem>
                       <SelectItem value='existing'>
                         Aluno antigo / graduado
                       </SelectItem>
                     </SelectContent>
                   </Select>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
             <Controller
               name='progressionStartDate'
               control={form.control}
-              render={({ field, fieldState }) => {
-                return (
-                  <div className='space-y-2'>
-                    <Label>
-                      {studentHistoryType === 'existing'
-                        ? 'Data da última graduação'
-                        : 'Data de início'}
-                    </Label>
-
-                    <DateInput
-                      value={field.value ?? undefined}
-                      onChange={(date) => field.onChange(date ?? null)}
-                      minDate={new Date(1940, 0, 1)}
-                      maxDate={new Date()}
-                      defaultMonth={new Date()}
-                      invalid={fieldState.invalid}
-                      ariaLabel={
-                        studentHistoryType === 'existing'
-                          ? 'Data da última graduação'
-                          : 'Data de início'
-                      }
-                    />
-
-                    <p className='text-sm text-zinc-500'>
-                      {studentHistoryType === 'existing'
-                        ? 'Use a data da última graduação para liberar o retroativo da faixa atual.'
-                        : 'Use a data em que o aluno iniciou na faixa atual.'}
-                    </p>
-
-                    {fieldState.error ? (
-                      <p className='text-sm text-red-400'>
-                        {fieldState.error.message}
-                      </p>
-                    ) : null}
-                  </div>
-                );
-              }}
+              render={({ field, fieldState }) => (
+                <FormField
+                  label='Data base de progresso'
+                  hint={
+                    studentHistoryType === 'existing'
+                      ? 'Informe a data da última graduação para liberar o retroativo da faixa atual.'
+                      : 'Informe a data em que o aluno iniciou na faixa atual.'
+                  }
+                  error={fieldState.error?.message}
+                >
+                  <DateInput
+                    value={field.value ?? undefined}
+                    onChange={(date) => field.onChange(date ?? null)}
+                    minDate={new Date(1940, 0, 1)}
+                    maxDate={new Date()}
+                    defaultMonth={new Date()}
+                    invalid={fieldState.invalid}
+                    ariaLabel='Data base de progresso'
+                  />
+                </FormField>
+              )}
             />
 
             <Controller
               name='billingDueDay'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label htmlFor='billingDueDay'>
-                    Dia de vencimento da mensalidade
-                  </Label>
+                <FormField
+                  label='Dia de vencimento da mensalidade'
+                  hint='Dia do mês em que a mensalidade vence. Máximo 28 para cobrir todos os meses.'
+                  error={fieldState.error?.message}
+                >
                   <Select
                     onValueChange={(val) => field.onChange(Number(val))}
                     value={field.value ? String(field.value) : ''}
                   >
                     <SelectTrigger
-                      className='border-white/10 bg-zinc-900 text-white'
+                      className={formSelectTriggerClassName}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder='Selecione o dia' />
                     </SelectTrigger>
-                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                    <SelectContent className={formSelectContentClassName}>
                       {Array.from({ length: 31 }, (_, i) => i + 1).map(
                         (day) => (
                           <SelectItem key={day} value={String(day)}>
@@ -516,16 +482,7 @@ export const StudentCreateForm = ({
                       )}
                     </SelectContent>
                   </Select>
-                  <p className='text-sm text-zinc-500'>
-                    Dia do mês em que a mensalidade vence. Máximo 28 para cobrir
-                    todos os meses.
-                  </p>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -533,16 +490,19 @@ export const StudentCreateForm = ({
               name='planId'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label>Plano de mensalidade</Label>
+                <FormField
+                  label='Plano de mensalidade'
+                  hint='Opcional. Se selecionado, a primeira fatura será gerada automaticamente.'
+                  error={fieldState.error?.message}
+                >
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger
-                      className='border-white/10 bg-zinc-900 text-white'
+                      className={formSelectTriggerClassName}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder='Selecione um plano (opcional)' />
                     </SelectTrigger>
-                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                    <SelectContent className={formSelectContentClassName}>
                       {plans.map((plan) => (
                         <SelectItem key={plan.id} value={plan.id}>
                           {plan.name} —{' '}
@@ -554,16 +514,7 @@ export const StudentCreateForm = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className='text-sm text-zinc-500'>
-                    Opcional. Se selecionado, a primeira fatura será gerada
-                    automaticamente.
-                  </p>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -571,16 +522,18 @@ export const StudentCreateForm = ({
               name='goal'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label>Objetivo principal</Label>
+                <FormField
+                  label='Objetivo principal'
+                  error={fieldState.error?.message}
+                >
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger
-                      className='border-white/10 bg-zinc-900 text-white'
+                      className={formSelectTriggerClassName}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder='Selecione o objetivo' />
                     </SelectTrigger>
-                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                    <SelectContent className={formSelectContentClassName}>
                       <SelectItem value='health'>Saúde</SelectItem>
                       <SelectItem value='self-defense'>
                         Defesa pessoal
@@ -589,12 +542,7 @@ export const StudentCreateForm = ({
                       <SelectItem value='hobby'>Hobby</SelectItem>
                     </SelectContent>
                   </Select>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -602,16 +550,18 @@ export const StudentCreateForm = ({
               name='leadSourceId'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2'>
-                  <Label>Origem do aluno</Label>
+                <FormField
+                  label='Origem do aluno'
+                  error={fieldState.error?.message}
+                >
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger
-                      className='border-white/10 bg-zinc-900 text-white'
+                      className={formSelectTriggerClassName}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder='Selecione a origem' />
                     </SelectTrigger>
-                    <SelectContent className='z-50 border-white/10 bg-zinc-950 text-white'>
+                    <SelectContent className={formSelectContentClassName}>
                       {leadSources.map((item) => (
                         <SelectItem key={item.id} value={item.id}>
                           {item.name}
@@ -619,12 +569,7 @@ export const StudentCreateForm = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
 
@@ -632,24 +577,21 @@ export const StudentCreateForm = ({
               name='notes'
               control={form.control}
               render={({ field, fieldState }) => (
-                <div className='space-y-2 md:col-span-2'>
-                  <Label htmlFor='notes'>Observações</Label>
+                <FormField
+                  label='Observações'
+                  htmlFor='notes'
+                  hint='Campo opcional para contexto adicional do aluno.'
+                  error={fieldState.error?.message}
+                  className='md:col-span-2'
+                >
                   <Textarea
                     id='notes'
                     placeholder='Adicione observações importantes sobre o aluno'
-                    className='min-h-32 border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
+                    className='min-h-28 border-white/10 bg-zinc-900 text-white placeholder:text-zinc-500'
                     aria-invalid={fieldState.invalid}
                     {...field}
                   />
-                  <p className='text-sm text-zinc-500'>
-                    Campo opcional para contexto adicional do aluno.
-                  </p>
-                  {fieldState.error ? (
-                    <p className='text-sm text-red-400'>
-                      {fieldState.error.message}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               )}
             />
           </CardContent>
@@ -661,25 +603,7 @@ export const StudentCreateForm = ({
             variant='outline'
             className='border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
             disabled={isPending}
-            onClick={() => {
-              form.reset({
-                fullName: '',
-                preferredName: '',
-                birthDate: undefined,
-                email: '',
-                phone: '',
-                gender: '',
-                status: '',
-                beltId: '',
-                mainClassId: '',
-                goal: '',
-                leadSourceId: '',
-                studentHistoryType: 'new',
-                progressionStartDate: new Date(),
-                billingDueDay: new Date().getDate(),
-                notes: '',
-              });
-            }}
+            onClick={() => router.push('/admin/alunos')}
           >
             Cancelar
           </Button>

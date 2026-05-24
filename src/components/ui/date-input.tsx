@@ -24,6 +24,7 @@ type DateInputProps = {
   maxDate?: Date;
   defaultMonth?: Date;
   className?: string;
+  size?: 'default' | 'compact';
   ariaLabel?: string;
   disabled?: boolean;
   invalid?: boolean;
@@ -71,6 +72,7 @@ export function DateInput({
   maxDate,
   defaultMonth,
   className,
+  size = 'default',
   ariaLabel,
   disabled,
   invalid,
@@ -109,7 +111,13 @@ export function DateInput({
   };
 
   return (
-    <div className={cn('relative flex w-full', className)}>
+    <div
+      className={cn(
+        'relative flex w-full',
+        size === 'compact' && 'max-w-42',
+        className,
+      )}
+    >
       <Input
         id={id}
         value={text}
@@ -121,7 +129,7 @@ export function DateInput({
         disabled={disabled}
         aria-invalid={invalid}
         aria-label={ariaLabel}
-        className='border-white/10 bg-zinc-900 pr-11 text-white placeholder:text-zinc-500'
+        className='h-9 border-white/10 bg-zinc-900 pr-11 text-white placeholder:text-zinc-500'
       />
 
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -138,7 +146,8 @@ export function DateInput({
         </PopoverTrigger>
 
         <PopoverContent
-          align='end'
+          align='start'
+          sideOffset={4}
           className='z-50 w-auto border-white/10 bg-zinc-950 p-0 text-white'
           onInteractOutside={(event) => {
             // Cliques nos dropdowns de mês/ano (portais aninhados do

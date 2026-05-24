@@ -14,8 +14,8 @@ type RootLayoutProps = Readonly<{
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang='pt-BR'>
-      <body suppressHydrationWarning>
+    <html lang='pt-BR' className='scrollbar-hide'>
+      <body className='scrollbar-hide' suppressHydrationWarning>
         {children}
 
         <Toaster

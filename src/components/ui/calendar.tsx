@@ -55,7 +55,7 @@ function CalendarDropdown({
         size='sm'
         aria-label={ariaLabel}
         className={cn(
-          'h-8 gap-1.5 rounded-md border border-white/10 bg-zinc-900 px-2.5 text-sm font-medium text-white capitalize shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-zinc-800 [&_svg:not([class*=\'size-\'])]:size-3.5',
+          'h-8 w-fit gap-1.5 rounded-md border border-white/10 bg-zinc-900 px-2.5 text-sm font-medium text-white capitalize shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-zinc-800 [&_svg:not([class*=\'size-\'])]:size-3.5',
           className,
         )}
       >
