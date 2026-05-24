@@ -1,6 +1,12 @@
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
+export type InstructorClassStudentPreview = {
+  id: string;
+  fullName: string;
+  belt: string;
+};
+
 export type InstructorClassListItem = {
   id: string;
   name: string;
@@ -10,6 +16,7 @@ export type InstructorClassListItem = {
   schedulesCount: number;
   active: boolean;
   enrollmentsCount: number;
+  students: InstructorClassStudentPreview[];
 };
 
 const weekDayMap: Record<string, string> = {
@@ -55,7 +62,26 @@ export async function getInstructorClasses(
           status: 'ACTIVE',
         },
         select: {
-          id: true,
+          student: {
+            select: {
+              id: true,
+              fullName: true,
+              beltStatus: {
+                select: {
+                  currentBelt: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          student: {
+            fullName: 'asc',
+          },
         },
       },
     },
@@ -79,5 +105,11 @@ export async function getInstructorClasses(
     schedulesCount: item.schedules.length,
     active: item.active,
     enrollmentsCount: item.enrollments.length,
+    students: item.enrollments.map((enrollment) => ({
+      id: enrollment.student.id,
+      fullName: enrollment.student.fullName,
+      belt:
+        enrollment.student.beltStatus?.currentBelt?.name ?? 'Sem faixa',
+    })),
   }));
 }

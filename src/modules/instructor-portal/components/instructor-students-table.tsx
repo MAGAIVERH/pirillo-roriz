@@ -9,6 +9,7 @@ import {
   Phone,
   Search,
   Trophy,
+  User,
   Users,
 } from 'lucide-react';
 
@@ -30,11 +31,37 @@ type StudentCardProps = {
   student: InstructorStudentListItem;
 };
 
+const StudentInfoRow = ({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Mail;
+  label: string;
+  value: string;
+}) => (
+  <div className="flex items-start gap-3">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-zinc-500">
+      <Icon className="h-3.5 w-3.5" />
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+        {label}
+      </p>
+      <p className="mt-0.5 break-words text-sm text-zinc-300">{value}</p>
+    </div>
+  </div>
+);
+
 const StudentCard = ({ student }: StudentCardProps) => {
+  const progressLabel = student.progressStatus
+    ? (progressStatusLabelMap[student.progressStatus] ?? student.progressStatus)
+    : 'Sem progresso';
+
   return (
     <Link
       href={`/professor/alunos/${student.id}?turma=${student.classId}`}
-      className="group flex flex-col rounded-2xl border border-white/10 bg-zinc-950 p-5 transition hover:border-red-500/30 hover:bg-zinc-900/60"
+      className="group flex h-full flex-col rounded-2xl border border-white/10 bg-zinc-950 p-5 transition hover:border-red-500/30 hover:bg-zinc-900/60"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -46,43 +73,44 @@ const StudentCard = ({ student }: StudentCardProps) => {
         <StudentStatusBadge status={student.status} />
       </div>
 
-      <div className="mt-4 space-y-2 border-t border-white/5 pt-4">
-        <p className="flex items-center gap-2 text-sm text-zinc-300">
-          <Mail className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
-          <span className="truncate">{student.email}</span>
-        </p>
-        <p className="flex items-center gap-2 text-sm text-zinc-300">
-          <Phone className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
-          <span className="truncate">{student.phone}</span>
-        </p>
-        <p className="flex items-center gap-2 text-sm text-zinc-300">
-          <Users className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
-          <span className="truncate">{student.className}</span>
-        </p>
+      <div className="mt-5 space-y-4 border-t border-white/5 pt-5">
+        <StudentInfoRow
+          icon={Mail}
+          label="E-mail"
+          value={student.email}
+        />
+        <StudentInfoRow
+          icon={Phone}
+          label="Telefone"
+          value={student.phone}
+        />
+        <StudentInfoRow
+          icon={Users}
+          label="Turma"
+          value={student.className}
+        />
+        <StudentInfoRow
+          icon={User}
+          label="Idade"
+          value={student.age !== null ? `${student.age} anos` : 'Não informada'}
+        />
+        <StudentInfoRow
+          icon={GraduationCap}
+          label="Progresso"
+          value={`${progressLabel} · ${student.attendancesSincePromotion} presença(s)`}
+        />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {student.isEligibleForPromotion ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
-            <Trophy className="h-3 w-3" />
+      {student.isEligibleForPromotion ? (
+        <div className="mt-4">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-400">
+            <Trophy className="h-3.5 w-3.5" />
             Apto a graduar
           </span>
-        ) : null}
+        </div>
+      ) : null}
 
-        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-zinc-900 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-          <GraduationCap className="h-3 w-3" />
-          {student.progressStatus
-            ? (progressStatusLabelMap[student.progressStatus] ??
-              student.progressStatus)
-            : 'Sem progresso'}
-        </span>
-
-        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-zinc-900 px-2.5 py-1 text-[10px] font-medium text-zinc-300">
-          {student.attendancesSincePromotion} presença(s)
-        </span>
-      </div>
-
-      <div className="mt-4 flex items-center justify-end text-xs font-medium text-zinc-500 group-hover:text-red-400">
+      <div className="mt-auto flex items-center justify-end pt-5 text-xs font-medium text-zinc-500 group-hover:text-red-400">
         Ver detalhes
         <ChevronRight className="ml-1 h-3.5 w-3.5" />
       </div>

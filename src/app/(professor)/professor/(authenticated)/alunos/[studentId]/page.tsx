@@ -1,17 +1,25 @@
 import { notFound } from 'next/navigation';
 import {
   CalendarClock,
+  CreditCard,
   GraduationCap,
+  Mail,
+  Phone,
   ShieldCheck,
   User,
   Users,
 } from 'lucide-react';
 
 import { AdminBackButton } from '@/components/layout/admin-back-button';
-import { Card, CardContent } from '@/components/ui/card';
 import { requireInstructorContext } from '@/lib/session-context';
 import { verifyInstructorStudentAccess } from '@/modules/instructor-portal/queries/verify-instructor-student-access';
 import { EligibleForPromotionBanner } from '@/modules/students/components/eligible-for-promotion-banner';
+import {
+  formatStudentPhone,
+  getStudentFinancialStatusLabel,
+  getStudentOperationalStatusLabel,
+  StudentDetailInfoCard,
+} from '@/modules/students/components/student-detail-info-card';
 import { StudentAttendanceHistoryCard } from '@/modules/students/components/student-attendance-history-card';
 import { StudentProgressCard } from '@/modules/students/components/student-progress-card';
 import { StudentStatusBadge } from '@/modules/students/components/student-status-badge';
@@ -27,43 +35,6 @@ type ProfessorStudentDetailPageProps = {
   searchParams: Promise<{
     turma?: string;
   }>;
-};
-
-type DetailInfoCardProps = {
-  title: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
-};
-
-const DetailInfoCard = ({ title, value, icon: Icon }: DetailInfoCardProps) => {
-  return (
-    <Card className="border-white/10 bg-zinc-950 text-white">
-      <CardContent className="flex items-start justify-between gap-4 px-5 py-3">
-        <div className="min-w-0 space-y-2">
-          <p className="text-base font-semibold text-white">{title}</p>
-          <p className="wrap-break-word text-sm text-zinc-300">{value}</p>
-        </div>
-
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-600/15 text-red-400">
-          <Icon className="h-5 w-5" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const getOperationalStatusLabel = (status: string) => {
-  const map: Record<string, string> = {
-    LEAD: 'Interessado',
-    TRIAL: 'Experimental',
-    ACTIVE: 'Ativo',
-    INACTIVE: 'Inativo',
-    FROZEN: 'Trancado',
-    CANCELED: 'Cancelado',
-    DELINQUENT: 'Inadimplente',
-  };
-
-  return map[status] ?? status;
 };
 
 export default async function ProfessorStudentDetailPage({
@@ -112,8 +83,8 @@ export default async function ProfessorStudentDetailPage({
         }
       : null;
 
-  const backHref = turma ? `/professor/turmas/${turma}` : '/professor/turmas';
-  const backLabel = turma ? 'Voltar para turma' : 'Voltar para turmas';
+  const backHref = turma ? `/professor/turmas/${turma}` : '/professor/alunos';
+  const backLabel = turma ? 'Voltar para turma' : 'Voltar para alunos';
 
   return (
     <div className="min-w-0 space-y-6">
@@ -124,14 +95,14 @@ export default async function ProfessorStudentDetailPage({
 
             <div className="space-y-2">
               <p className="text-sm font-medium uppercase tracking-[0.18em] text-red-500">
-                Aluno
+                Detalhes do aluno
               </p>
 
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 {student.fullName}
               </h1>
 
-              <p className="max-w-3xl text-sm leading-6 text-zinc-400">
+              <p className="max-w-3xl text-sm leading-6 break-words text-zinc-400">
                 Acompanhe a frequência, progresso de graduação e lance
                 presenças manualmente.
               </p>
@@ -157,9 +128,31 @@ export default async function ProfessorStudentDetailPage({
       ) : null}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <DetailInfoCard title="Faixa atual" value={student.belt} icon={GraduationCap} />
-        <DetailInfoCard title="Turma" value={student.className} icon={Users} />
-        <DetailInfoCard
+        <StudentDetailInfoCard title="Email" value={student.email} icon={Mail} />
+        <StudentDetailInfoCard
+          title="Telefone"
+          value={formatStudentPhone(student.phone)}
+          icon={Phone}
+        />
+        <StudentDetailInfoCard
+          title="Faixa atual"
+          value={student.belt}
+          icon={GraduationCap}
+        />
+        <StudentDetailInfoCard
+          title="Idade"
+          value={student.age !== null ? `${student.age} anos` : '-'}
+          icon={User}
+        />
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StudentDetailInfoCard
+          title="Turma"
+          value={student.className}
+          icon={Users}
+        />
+        <StudentDetailInfoCard
           title={
             student.baseType === 'LAST_GRADUATION'
               ? 'Última graduação'
@@ -168,15 +161,15 @@ export default async function ProfessorStudentDetailPage({
           value={student.baseDate}
           icon={CalendarClock}
         />
-        <DetailInfoCard
-          title="Situação"
-          value={getOperationalStatusLabel(student.status)}
+        <StudentDetailInfoCard
+          title="Situação atual"
+          value={getStudentOperationalStatusLabel(student.status)}
           icon={ShieldCheck}
         />
-        <DetailInfoCard
-          title="Idade"
-          value={student.age !== null ? `${student.age} anos` : '-'}
-          icon={User}
+        <StudentDetailInfoCard
+          title="Situação financeira"
+          value={getStudentFinancialStatusLabel(student.status)}
+          icon={CreditCard}
         />
       </section>
 
