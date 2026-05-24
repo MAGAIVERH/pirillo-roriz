@@ -30,6 +30,7 @@ export async function deleteWarningAction(
     });
 
     revalidatePath('/admin/avisos');
+    revalidatePath('/professor/avisos');
 
     return {
       success: true,

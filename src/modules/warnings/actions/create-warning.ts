@@ -57,6 +57,7 @@ export async function createWarningAction(
     });
 
     revalidatePath('/admin/avisos');
+    revalidatePath('/professor/avisos');
 
     return {
       success: true,
