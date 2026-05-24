@@ -1,11 +1,11 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { db } from '@/lib/db';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { calculateStudentProgress } from '../lib/calcule-student-progress';
+import { revalidateAttendancePaths } from '@/modules/attendance/lib/revalidate-attendance-paths';
 
 const deleteStudentManualAttendanceSchema = z.object({
   studentId: z.string().min(1, 'Aluno inválido.'),
@@ -60,7 +60,7 @@ export const deleteStudentManualAttendanceAction = async (
 
     await calculateStudentProgress(attendance.studentId);
 
-    revalidatePath(`/admin/alunos/${attendance.studentId}`);
+    revalidateAttendancePaths(attendance.studentId);
 
     return {
       success: true,

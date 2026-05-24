@@ -1,6 +1,5 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import {
@@ -14,6 +13,7 @@ import { db } from '@/lib/db';
 import { requireInstructorContext } from '@/lib/session-context';
 import { verifyInstructorStudentAccess } from '@/modules/instructor-portal/queries/verify-instructor-student-access';
 import { calculateStudentProgress } from '@/modules/students/lib/calcule-student-progress';
+import { revalidateAttendancePaths } from '@/modules/attendance/lib/revalidate-attendance-paths';
 import { validateStudentCanReceiveAttendance } from '@/modules/students/lib/validate-student-attendance';
 
 const createInstructorStudentAttendanceSchema = z.object({
@@ -207,10 +207,7 @@ export const createInstructorStudentAttendanceAction = async (
 
     await calculateStudentProgress(student.id);
 
-    revalidatePath(`/professor/alunos/${student.id}`);
-    revalidatePath('/professor/turmas');
-    revalidatePath('/professor');
-    revalidatePath(`/admin/alunos/${student.id}`);
+    revalidateAttendancePaths(student.id);
 
     return {
       success: true,

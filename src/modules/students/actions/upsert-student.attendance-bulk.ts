@@ -1,6 +1,5 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import {
@@ -12,6 +11,7 @@ import {
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 import { calculateStudentProgress } from '../lib/calcule-student-progress';
+import { revalidateAttendancePaths } from '@/modules/attendance/lib/revalidate-attendance-paths';
 
 const upsertStudentAttendanceBulkSchema = z.object({
   studentId: z.string().min(1, 'Aluno inválido.'),
@@ -185,7 +185,7 @@ export const upsertStudentAttendanceBulkAction = async (
 
     await calculateStudentProgress(student.id);
 
-    revalidatePath(`/admin/alunos/${student.id}`);
+    revalidateAttendancePaths(student.id);
 
     return {
       success: true,

@@ -1,6 +1,5 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import {
@@ -11,7 +10,8 @@ import {
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 import { requireInstructorContext } from '@/lib/session-context';
-import { calculateStudentProgress } from '@/modules/students/lib/calcule-student-progress';
+import { recordSessionAttendance } from '@/modules/attendance/lib/record-session-attendance';
+import { revalidateAttendancePaths } from '@/modules/attendance/lib/revalidate-attendance-paths';
 import { validateStudentCanReceiveAttendance } from '@/modules/students/lib/validate-student-attendance';
 
 const markInstructorSessionAttendanceSchema = z.object({
@@ -53,7 +53,6 @@ export const markInstructorSessionAttendanceAction = async (
       select: {
         id: true,
         status: true,
-        endsAt: true,
         classId: true,
       },
     });
@@ -102,64 +101,16 @@ export const markInstructorSessionAttendanceAction = async (
       };
     }
 
-    const isPresentStatus =
-      parsed.data.status === AttendanceStatus.PRESENT ||
-      parsed.data.status === AttendanceStatus.LATE;
-
-    const existingAttendance = await db.attendance.findFirst({
-      where: {
-        classSessionId: session.id,
-        studentId: parsed.data.studentId,
-      },
-      select: {
-        id: true,
-      },
+    await recordSessionAttendance({
+      sessionId: session.id,
+      studentId: parsed.data.studentId,
+      status: parsed.data.status,
+      source: AttendanceSource.MANUAL,
+      recordedByUserId: user.id,
+      openSessionIfScheduled: true,
     });
 
-    const checkedInAt = isPresentStatus ? new Date() : null;
-
-    if (existingAttendance) {
-      await db.attendance.update({
-        where: {
-          id: existingAttendance.id,
-        },
-        data: {
-          status: parsed.data.status,
-          source: AttendanceSource.MANUAL,
-          checkedInAt,
-          recordedByUserId: user.id,
-        },
-      });
-    } else {
-      await db.attendance.create({
-        data: {
-          classSessionId: session.id,
-          studentId: parsed.data.studentId,
-          status: parsed.data.status,
-          source: AttendanceSource.MANUAL,
-          checkedInAt,
-          recordedByUserId: user.id,
-        },
-      });
-    }
-
-    if (session.status === ClassSessionStatus.SCHEDULED) {
-      await db.classSession.update({
-        where: {
-          id: session.id,
-        },
-        data: {
-          status: ClassSessionStatus.OPEN,
-        },
-      });
-    }
-
-    await calculateStudentProgress(parsed.data.studentId);
-
-    revalidatePath('/professor');
-    revalidatePath('/professor/turmas');
-    revalidatePath(`/professor/alunos/${parsed.data.studentId}`);
-    revalidatePath(`/admin/alunos/${parsed.data.studentId}`);
+    revalidateAttendancePaths(parsed.data.studentId);
 
     return {
       success: true,
