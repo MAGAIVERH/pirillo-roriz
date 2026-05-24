@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, Trash2, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { createInstructorStudentAttendanceAction } from '@/modules/instructor-portal/actions/create-instructor-student-attendance';
 import { deleteStudentManualAttendanceAction } from '@/modules/students/actions/delete-student-manual-attendance';
 import { createStudentManualAttendanceAction } from '@/modules/students/actions/create-student-manual-attendance';
 import { upsertStudentAttendanceBulkAction } from '../actions/upsert-student.attendance-bulk';
@@ -31,6 +32,10 @@ type StudentAttendanceHistoryCardProps = {
   baseDateLabel: string | null;
   showBatchControls: boolean;
   progressProjectedDateIso: string | null;
+  allowMarking?: boolean;
+  allowDelete?: boolean;
+  attendanceMode?: 'admin' | 'instructor';
+  isDelinquent?: boolean;
   attendances: {
     id: string;
     date: string;
@@ -81,24 +86,28 @@ const statusButtonMap: {
 
 const toLocalDateKey = (date: Date) => format(date, 'yyyy-MM-dd');
 
-const getStatusHeatmapClassName = (status?: string) => {
+const getStatusHeatmapClassName = (status?: string, isInRange?: boolean) => {
   if (status === 'PRESENT') {
-    return 'bg-emerald-500/70';
+    return 'bg-emerald-500/80 border-emerald-400/30';
   }
 
   if (status === 'ABSENT') {
-    return 'bg-red-500/70';
+    return 'bg-red-500/80 border-red-400/30';
   }
 
   if (status === 'LATE') {
-    return 'bg-amber-500/70';
+    return 'bg-amber-500/80 border-amber-400/30';
   }
 
   if (status === 'EXCUSED') {
-    return 'bg-sky-500/70';
+    return 'bg-sky-500/80 border-sky-400/30';
   }
 
-  return 'bg-zinc-800';
+  if (isInRange) {
+    return 'bg-zinc-700/70 border-zinc-500/25';
+  }
+
+  return 'bg-zinc-800/80 border-zinc-600/20';
 };
 
 export const StudentAttendanceHistoryCard = ({
@@ -107,6 +116,10 @@ export const StudentAttendanceHistoryCard = ({
   baseDateLabel,
   showBatchControls,
   progressProjectedDateIso,
+  allowMarking = true,
+  allowDelete = true,
+  attendanceMode = 'admin',
+  isDelinquent = false,
   attendances,
 }: StudentAttendanceHistoryCardProps) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -218,18 +231,25 @@ export const StudentAttendanceHistoryCard = ({
       dateKey: string;
       dayLabel: string;
       status?: string;
+      isInRange: boolean;
     }[] = [];
+
+    const rangeStartKey = minDate ? toLocalDateKey(minDate) : null;
+    const rangeEndKey = toLocalDateKey(today);
 
     const cursor = new Date(start);
 
     while (cursor <= end) {
       const dateKey = toLocalDateKey(cursor);
       const attendance = attendanceMap.get(dateKey);
+      const isInRange =
+        dateKey >= (rangeStartKey ?? dateKey) && dateKey <= rangeEndKey;
 
       days.push({
         dateKey,
         dayLabel: format(cursor, 'dd/MM'),
         status: attendance?.status,
+        isInRange,
       });
 
       cursor.setDate(cursor.getDate() + 1);
@@ -237,6 +257,18 @@ export const StudentAttendanceHistoryCard = ({
 
     return days;
   }, [attendanceMap, minDate, today]);
+
+  const heatmapWeeks = useMemo(() => {
+    const weeks: (typeof heatmapDays)[] = [];
+
+    for (let index = 0; index < heatmapDays.length; index += 7) {
+      weeks.push(heatmapDays.slice(index, index + 7));
+    }
+
+    return weeks;
+  }, [heatmapDays]);
+
+  const weekDayLabels = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
   const selectedDateKeys = useMemo(() => {
     return selectedDates.map((date) => toLocalDateKey(date));
@@ -311,19 +343,34 @@ export const StudentAttendanceHistoryCard = ({
     .map((item) => new Date(`${item.date}T12:00:00`));
 
   const handleSave = (status: AttendanceStatusValue) => {
+    if (!allowMarking) {
+      toast.error('Lançamento de presença indisponível para este aluno.');
+      return;
+    }
+
     if (selectedDates.length === 0) {
       toast.error('Selecione pelo menos uma data no calendário.');
       return;
     }
 
+    if (attendanceMode === 'instructor' && selectedDates.length > 1) {
+      toast.error('Selecione apenas uma data por vez.');
+      return;
+    }
+
     startSaving(async () => {
       if (selectedDates.length === 1 && selectedDate) {
-        const result = await createStudentManualAttendanceAction({
+        const payload = {
           studentId,
           attendanceDate: toLocalDateKey(selectedDate),
           status,
           notes,
-        });
+        };
+
+        const result =
+          attendanceMode === 'instructor'
+            ? await createInstructorStudentAttendanceAction(payload)
+            : await createStudentManualAttendanceAction(payload);
 
         if (!result.success) {
           toast.error(result.message);
@@ -412,12 +459,31 @@ export const StudentAttendanceHistoryCard = ({
       <CardHeader className='p-4 sm:p-6'>
         <CardTitle className='text-lg sm:text-xl'>Calendário de presença</CardTitle>
         <p className='text-sm leading-6 text-zinc-400'>
-          Lance presenças retroativas e acompanhe a jornada até a próxima
-          graduação.
+          {attendanceMode === 'instructor'
+            ? 'Marque presenças dos alunos e acompanhe a jornada até a próxima graduação.'
+            : 'Lance presenças retroativas e acompanhe a jornada até a próxima graduação.'}
         </p>
       </CardHeader>
 
       <CardContent className='min-w-0 space-y-6 p-4 pt-0 sm:p-6 sm:pt-0'>
+        {isDelinquent ? (
+          <div className='rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4'>
+            <div className='flex items-start gap-3'>
+              <TriangleAlert className='mt-0.5 h-4 w-4 shrink-0 text-amber-400' />
+              <div>
+                <p className='text-sm font-medium text-amber-100'>
+                  Aluno inadimplente
+                </p>
+                <p className='mt-1 text-xs leading-5 text-amber-200/80'>
+                  Este aluno pode treinar, mas não é possível lançar presença
+                  enquanto a mensalidade estiver em atraso. Presenças não
+                  contabilizam para graduação neste período.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {showBatchControls ? (
           <div className='w-full rounded-2xl border border-white/10 bg-zinc-900 p-4'>
             <div className='space-y-4'>
@@ -477,11 +543,12 @@ export const StudentAttendanceHistoryCard = ({
                 <Calendar
                   mode='multiple'
                   selected={selectedDates}
-                  onSelect={handleSelectedDatesChange}
+                  onSelect={allowMarking ? handleSelectedDatesChange : undefined}
                   locale={ptBR}
                   disabled={[
                     { after: today },
                     ...(minDate ? [{ before: minDate }] : []),
+                    ...(!allowMarking ? [{ before: new Date('2099-01-01') }] : []),
                   ]}
                   className='w-full max-w-full rounded-md bg-zinc-900 text-white'
                   modifiers={{
@@ -531,7 +598,10 @@ export const StudentAttendanceHistoryCard = ({
                     type='button'
                     variant='outline'
                     disabled={
-                      isSaving || isDeleting || selectedDates.length === 0
+                      !allowMarking ||
+                      isSaving ||
+                      isDeleting ||
+                      selectedDates.length === 0
                     }
                     onClick={() => handleSave(item.value)}
                     className={cn(
@@ -544,23 +614,26 @@ export const StudentAttendanceHistoryCard = ({
                 ))}
               </div>
 
-              <div className='mt-3'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  disabled={
-                    isSaving ||
-                    isDeleting ||
-                    !selectedAttendance ||
-                    selectedDates.length !== 1
-                  }
-                  onClick={handleDelete}
-                  className='w-full border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
-                >
-                  <Trash2 className='mr-2 h-4 w-4' />
-                  {isDeleting ? 'Removendo...' : 'Remover lançamento'}
-                </Button>
-              </div>
+              {allowDelete ? (
+                <div className='mt-3'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    disabled={
+                      !allowMarking ||
+                      isSaving ||
+                      isDeleting ||
+                      !selectedAttendance ||
+                      selectedDates.length !== 1
+                    }
+                    onClick={handleDelete}
+                    className='w-full border-white/10 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white'
+                  >
+                    <Trash2 className='mr-2 h-4 w-4' />
+                    {isDeleting ? 'Removendo...' : 'Remover lançamento'}
+                  </Button>
+                </div>
+              ) : null}
 
               <div className='mt-4'>
                 <p className='mb-2 text-sm text-zinc-400'>Observações</p>
@@ -699,6 +772,10 @@ export const StudentAttendanceHistoryCard = ({
                       <span className='h-2.5 w-2.5 rounded-[2px] bg-sky-500/70' />
                       Justif.
                     </span>
+                    <span className='flex items-center gap-1'>
+                      <span className='h-2.5 w-2.5 rounded-[2px] border border-zinc-500/25 bg-zinc-700/70' />
+                      Sem lanç.
+                    </span>
                   </div>
                 </div>
 
@@ -706,103 +783,94 @@ export const StudentAttendanceHistoryCard = ({
                   Deslize horizontalmente para ver toda a jornada.
                 </p>
 
-                <div className='mt-3 max-w-full overflow-x-auto overscroll-x-contain'>
-                  <div className='inline-flex min-w-0 gap-2 pb-1'>
-                    <div className='shrink-0 pt-5 text-[10px] text-zinc-500 sm:text-[11px]'>
-                      <div className='grid auto-rows-[12px] gap-1 sm:auto-rows-[14px] sm:gap-1.5'>
-                        <span className='flex h-3 items-center sm:h-3.5'>D</span>
-                        <span className='flex h-3 items-center sm:h-3.5'>S</span>
-                        <span className='flex h-3 items-center sm:h-3.5'>T</span>
-                        <span className='flex h-3 items-center sm:h-3.5'>Q</span>
-                        <span className='flex h-3 items-center sm:h-3.5'>Q</span>
-                        <span className='flex h-3 items-center sm:h-3.5'>S</span>
-                        <span className='flex h-3 items-center sm:h-3.5'>S</span>
+                <div className='mt-3 overflow-x-auto overscroll-x-contain scrollbar-hide'>
+                  <div className='inline-flex min-w-max gap-2 pb-1'>
+                    <div className='sticky left-0 z-10 shrink-0 bg-zinc-950 pt-6 pr-1 shadow-[6px_0_12px_-6px_rgba(0,0,0,0.9)]'>
+                      <div className='grid auto-rows-[14px] gap-1.5'>
+                        {weekDayLabels.map((label, index) => (
+                          <span
+                            key={`weekday-${index}`}
+                            className='flex h-3.5 w-4 items-center justify-center text-[10px] text-zinc-500 sm:text-[11px]'
+                          >
+                            {label}
+                          </span>
+                        ))}
                       </div>
                     </div>
 
-                    <div className='min-w-0'>
-                      <div className='mb-1.5 grid grid-flow-col auto-cols-[12px] gap-1 text-[10px] text-zinc-500 sm:auto-cols-[14px] sm:gap-1.5 sm:text-[11px]'>
-                        {Array.from({
-                          length: Math.ceil(heatmapDays.length / 7),
-                        }).map((_, columnIndex) => {
-                          const firstDay = heatmapDays[columnIndex * 7];
-                          const previousFirstDay =
-                            columnIndex > 0
-                              ? heatmapDays[(columnIndex - 1) * 7]
-                              : null;
-
-                          const currentMonth = firstDay?.dateKey.slice(5, 7);
-                          const previousMonth = previousFirstDay?.dateKey.slice(
-                            5,
-                            7,
-                          );
-
+                    <div className='min-w-max'>
+                      <div className='relative mb-2 flex gap-1.5'>
+                        {heatmapWeeks.map((week, weekIndex) => {
+                          const firstDay = week[0];
+                          const previousWeek =
+                            weekIndex > 0 ? heatmapWeeks[weekIndex - 1] : null;
+                          const currentMonth = firstDay?.dateKey.slice(0, 7);
+                          const previousMonth =
+                            previousWeek?.[0]?.dateKey.slice(0, 7);
                           const shouldShowMonth =
-                            columnIndex === 0 || currentMonth !== previousMonth;
+                            weekIndex === 0 || currentMonth !== previousMonth;
 
                           return (
                             <div
-                              key={`month-${columnIndex}`}
-                              className='h-4 truncate'
+                              key={`month-${weekIndex}`}
+                              className='relative h-4 w-3.5 shrink-0 sm:w-4'
                             >
-                              {shouldShowMonth && firstDay
-                                ? format(
+                              {shouldShowMonth && firstDay ? (
+                                <span className='absolute left-0 top-0 whitespace-nowrap text-[10px] font-medium uppercase text-zinc-400 sm:text-[11px]'>
+                                  {format(
                                     new Date(`${firstDay.dateKey}T12:00:00`),
                                     'MMM',
                                     { locale: ptBR },
-                                  )
-                                : ''}
+                                  ).replace('.', '')}
+                                </span>
+                              ) : null}
                             </div>
                           );
                         })}
                       </div>
 
-                      <div className='grid grid-flow-col auto-cols-[12px] gap-1 sm:auto-cols-[14px] sm:gap-1.5'>
-                        {Array.from({
-                          length: Math.ceil(heatmapDays.length / 7),
-                        }).map((_, columnIndex) => {
-                          const columnDays = heatmapDays.slice(
-                            columnIndex * 7,
-                            columnIndex * 7 + 7,
-                          );
+                      <div className='flex gap-1.5'>
+                        {heatmapWeeks.map((week, weekIndex) => (
+                          <div
+                            key={`heatmap-week-${weekIndex}`}
+                            className='flex flex-col gap-1.5'
+                          >
+                            {week.map((day) => (
+                              <TooltipProvider
+                                key={day.dateKey}
+                                delayDuration={120}
+                              >
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div
+                                      className={cn(
+                                        'h-3.5 w-3.5 rounded-[3px] border sm:h-4 sm:w-4',
+                                        getStatusHeatmapClassName(
+                                          day.status,
+                                          day.isInRange,
+                                        ),
+                                      )}
+                                    />
+                                  </TooltipTrigger>
 
-                          return (
-                            <div
-                              key={`heatmap-column-${columnIndex}`}
-                              className='flex flex-col gap-1 sm:gap-1.5'
-                            >
-                              {columnDays.map((day) => (
-                                <TooltipProvider
-                                  key={day.dateKey}
-                                  delayDuration={120}
-                                >
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div
-                                        className={cn(
-                                          'h-3 w-3 rounded-[2px] border border-white/5 transition sm:h-3.5 sm:w-3.5',
-                                          getStatusHeatmapClassName(day.status),
-                                        )}
-                                      />
-                                    </TooltipTrigger>
-
-                                    <TooltipContent className='border-white/10 bg-zinc-950 text-white'>
-                                      <p className='text-xs leading-5'>
-                                        {day.dayLabel}
-                                        {day.status
-                                          ? ` • ${
-                                              statusLabelMap[day.status] ??
-                                              day.status
-                                            }`
-                                          : ' • Sem lançamento'}
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ))}
-                            </div>
-                          );
-                        })}
+                                  <TooltipContent className='border-white/10 bg-zinc-950 text-white'>
+                                    <p className='text-xs leading-5'>
+                                      {day.dayLabel}
+                                      {day.status
+                                        ? ` • ${
+                                            statusLabelMap[day.status] ??
+                                            day.status
+                                          }`
+                                        : day.isInRange
+                                          ? ' • Sem lançamento'
+                                          : ' • Fora da jornada'}
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ))}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
