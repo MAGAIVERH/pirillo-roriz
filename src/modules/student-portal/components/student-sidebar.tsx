@@ -24,6 +24,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { shellHeaderHeightClass } from '@/components/layout/shell-header';
+import { PortalSwitchLink } from '@/modules/auth/components/portal-switch-link';
 import { PortalUserMenu } from '@/modules/auth/components/portal-user-menu';
 
 type StudentSidebarProps = {
@@ -33,6 +34,7 @@ type StudentSidebarProps = {
     image?: string | null;
   };
   unreadWarnings: number;
+  showProfessorPortalLink?: boolean;
 };
 
 const navigation: {
@@ -55,7 +57,11 @@ const getIsActive = (pathname: string, href: string) => {
   return pathname === href || pathname.startsWith(`${href}/`);
 };
 
-export function StudentSidebar({ user, unreadWarnings }: StudentSidebarProps) {
+export function StudentSidebar({
+  user,
+  unreadWarnings,
+  showProfessorPortalLink = false,
+}: StudentSidebarProps) {
   const pathname = usePathname();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = !isMobile && state === 'collapsed';
@@ -139,7 +145,14 @@ export function StudentSidebar({ user, unreadWarnings }: StudentSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-white/10 bg-zinc-950 p-2">
+      <SidebarFooter className="space-y-2 border-t border-white/10 bg-zinc-950 p-2">
+        {showProfessorPortalLink ? (
+          <PortalSwitchLink
+            href="/professor"
+            label="Ir para portal do professor"
+            isCollapsed={isCollapsed}
+          />
+        ) : null}
         <PortalUserMenu
           user={user}
           isCollapsed={isCollapsed}

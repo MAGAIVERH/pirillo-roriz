@@ -2,37 +2,17 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ArrowLeft, Users } from 'lucide-react';
 
-import { AppRole } from '@/generated/prisma/client';
-import { getOrCreateDefaultAcademy } from '@/lib/academy';
-import { db } from '@/lib/db';
-import { getAuthSession } from '@/lib/session-context';
+import { getAuthSession, getPortalAccessForUser } from '@/lib/session-context';
 import { PortalLoginForm } from '@/modules/auth/components/portal-login-form';
+import { PortalLoginSessionAlert } from '@/modules/auth/components/portal-login-session-alert';
 
 export default async function AlunoLoginPage() {
   const session = await getAuthSession();
 
   if (session) {
-    const academy = await getOrCreateDefaultAcademy();
+    const access = await getPortalAccessForUser(session.id, session.email);
 
-    const [studentRole, student] = await Promise.all([
-      db.userRoleAssignment.findFirst({
-        where: {
-          userId: session.id,
-          academyId: academy.id,
-          role: AppRole.STUDENT,
-        },
-        select: { id: true },
-      }),
-      db.student.findFirst({
-        where: {
-          userId: session.id,
-          academyId: academy.id,
-        },
-        select: { id: true },
-      }),
-    ]);
-
-    if (studentRole && student) {
+    if (access.hasStudentAccess) {
       redirect('/aluno');
     }
   }
@@ -53,15 +33,15 @@ export default async function AlunoLoginPage() {
         </div>
 
         <p className="mt-3 text-sm leading-6 text-zinc-400">
-          Entre com seu email e senha para exibir seu QR Code de presença e
-          acompanhar seu histórico.
+          Entre com o email do cadastro de aluno. Se você também é professor com
+          o mesmo email, um único login libera os dois portais.
         </p>
 
         {session ? (
-          <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-200">
-            Sua conta não possui acesso de aluno. Use outro login ou peça ao
-            admin para liberar seu acesso.
-          </div>
+          <PortalLoginSessionAlert
+            message="A conta logada agora não tem acesso de aluno. Saia da sessão atual e entre com o email do aluno."
+            sessionEmail={session.email}
+          />
         ) : null}
 
         <div className="mt-6">

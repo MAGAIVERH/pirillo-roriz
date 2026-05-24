@@ -189,6 +189,12 @@ export async function provisionUserAccount(
     text: email.text,
   });
 
+  if (!mailResult.sent && process.env.NODE_ENV !== 'production') {
+    console.info(
+      `[dev] Senha provisória para ${normalizedEmail}: ${password}`,
+    );
+  }
+
   return {
     success: true,
     userId,

@@ -2,9 +2,14 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { AppRole } from '@/generated/prisma/client';
+import { hasAdminAccess } from '@/lib/admin-action';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import {
+  ensurePortalLinksForUser,
+  getPortalAccessForUser,
+} from '@/modules/users/lib/ensure-portal-links';
 
 export type SessionUser = {
   id: string;
@@ -36,12 +41,6 @@ export type StudentContext = {
   };
   academyId: string;
 };
-
-const ADMIN_ROLES: AppRole[] = [
-  AppRole.ADMIN_MASTER,
-  AppRole.ADMIN,
-  AppRole.RECEPTION,
-];
 
 export async function getAuthSession(): Promise<SessionUser | null> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -82,6 +81,8 @@ export async function requireInstructorContext(): Promise<InstructorContext> {
     redirect('/professor/login');
   }
 
+  await ensurePortalLinksForUser(user.id, user.email);
+
   const academy = await getOrCreateDefaultAcademy();
 
   const [instructorRole, instructor] = await Promise.all([
@@ -110,7 +111,7 @@ export async function requireInstructorContext(): Promise<InstructorContext> {
   ]);
 
   if (!instructorRole || !instructor) {
-    redirect('/professor/login');
+    redirect('/professor/login?error=no-access');
   }
 
   return {
@@ -126,6 +127,8 @@ export async function requireStudentContext(): Promise<StudentContext> {
   if (!user) {
     redirect('/aluno/login');
   }
+
+  await ensurePortalLinksForUser(user.id, user.email);
 
   const academy = await getOrCreateDefaultAcademy();
 
@@ -171,13 +174,11 @@ export async function requireAdminSession(): Promise<SessionUser> {
     redirect('/login');
   }
 
-  const academy = await getOrCreateDefaultAcademy();
-  const roles = await getUserRoles(user.id, academy.id);
-  const hasAdminAccess = roles.some((role) => ADMIN_ROLES.includes(role));
-
-  if (!hasAdminAccess) {
+  if (!(await hasAdminAccess(user.id))) {
     redirect('/login');
   }
 
   return user;
 }
+
+export { getPortalAccessForUser };
