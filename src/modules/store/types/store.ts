@@ -21,6 +21,7 @@ export type StoreProduct = {
   reservedQuantity: number;
   availableQuantity: number;
   imageUrl: string | null;
+  imageUrls: string[];
   visibility: StoreVisibility;
   active: boolean;
   pendingReservers: StorePendingReserver[];

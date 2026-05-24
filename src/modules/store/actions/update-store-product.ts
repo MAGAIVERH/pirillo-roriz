@@ -6,6 +6,7 @@ import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
 import { buildUniqueProductSlug } from '../lib/build-unique-product-slug';
+import { resolveProductImagePayload } from '../lib/resolve-product-image-payload';
 import { visibilityToAudience } from '../lib/store-mappers';
 import {
   storeProductSchema,
@@ -48,7 +49,7 @@ export async function updateStoreProductAction(
         ? await buildUniqueProductSlug(academy.id, normalizedName, productId)
         : undefined;
 
-    const imageUrl = parsed.data.imageUrl?.trim() || null;
+    const { imageUrl, galleryUrls } = resolveProductImagePayload(parsed.data);
 
     await db.product.update({
       where: { id: productId },
@@ -59,6 +60,7 @@ export async function updateStoreProductAction(
         priceInCents: parsed.data.priceCents,
         stockQuantity: parsed.data.stockQuantity,
         imageUrl,
+        galleryUrls,
         audience: visibilityToAudience(parsed.data.visibility),
       },
     });

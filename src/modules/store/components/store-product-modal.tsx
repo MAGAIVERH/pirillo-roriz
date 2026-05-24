@@ -6,6 +6,8 @@ import { Camera, GraduationCap, Tag, UserRound, X } from 'lucide-react';
 import type { StoreProduct, StoreVisibility } from '../types/store';
 import type { StoreProductInput } from '../schemas/store-product-schema';
 
+const MAX_PRODUCT_IMAGES = 10;
+
 type StoreProductModalProps = {
   product: StoreProduct | null;
   onClose: () => void;
@@ -31,17 +33,48 @@ export function StoreProductModal({
   const [visibility, setVisibility] = useState<StoreVisibility>(
     product?.visibility ?? 'todos',
   );
-  const [imageUrl, setImageUrl] = useState(product?.imageUrl ?? '');
+  const [imageUrls, setImageUrls] = useState<string[]>(() => {
+    if (product?.imageUrls.length) {
+      return product.imageUrls;
+    }
+
+    return product?.imageUrl ? [product.imageUrl] : [];
+  });
 
   function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      return;
+    }
 
-    const reader = new FileReader();
-    reader.onload = (loadEvent) => {
-      setImageUrl((loadEvent.target?.result as string) ?? '');
-    };
-    reader.readAsDataURL(file);
+    const remainingSlots = MAX_PRODUCT_IMAGES - imageUrls.length;
+    const selectedFiles = Array.from(files).slice(0, remainingSlots);
+
+    for (const file of selectedFiles) {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        const nextUrl = loadEvent.target?.result;
+
+        if (typeof nextUrl !== 'string' || !nextUrl) {
+          return;
+        }
+
+        setImageUrls((current) => {
+          if (current.length >= MAX_PRODUCT_IMAGES) {
+            return current;
+          }
+
+          return [...current, nextUrl];
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    event.target.value = '';
+  }
+
+  function handleRemoveImage(index: number) {
+    setImageUrls((current) => current.filter((_, currentIndex) => currentIndex !== index));
   }
 
   function handleSave() {
@@ -61,7 +94,7 @@ export function StoreProductModal({
           priceCents,
           stockQuantity: stockValue,
           description: description.trim() || undefined,
-          imageUrl: imageUrl || undefined,
+          imageUrls,
           visibility,
         },
         product?.id,
@@ -106,26 +139,60 @@ export function StoreProductModal({
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-400">
-              Foto do produto
-            </label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="block text-xs font-medium text-zinc-400">
+                Fotos do produto
+              </label>
+              <span className="text-[10px] text-zinc-500">
+                {imageUrls.length}/{MAX_PRODUCT_IMAGES}
+              </span>
+            </div>
+
+            {imageUrls.length > 0 ? (
+              <div className="mb-3 grid grid-cols-3 gap-2">
+                {imageUrls.map((url, index) => (
+                  <div
+                    key={`${url.slice(0, 24)}-${index}`}
+                    className="relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-zinc-900"
+                  >
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="absolute right-1 top-1 rounded-md bg-black/70 p-1 text-zinc-300 transition hover:text-white"
+                      aria-label={`Remover foto ${index + 1}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                    {index === 0 ? (
+                      <span className="absolute bottom-1 left-1 rounded-md bg-red-600/90 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-white">
+                        Capa
+                      </span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
             <button
               type="button"
+              disabled={imageUrls.length >= MAX_PRODUCT_IMAGES}
               onClick={() => fileRef.current?.click()}
-              className="relative flex h-28 w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/20 bg-zinc-900 transition hover:border-red-500/40"
+              className="relative flex h-24 w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-white/20 bg-zinc-900 transition hover:border-red-500/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {imageUrl ? (
-                <img src={imageUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-zinc-500">
-                  <Camera className="h-6 w-6" />
-                  <span className="text-xs">Clique para adicionar foto</span>
-                </div>
-              )}
+              <div className="flex flex-col items-center gap-2 text-zinc-500">
+                <Camera className="h-6 w-6" />
+                <span className="text-xs">
+                  {imageUrls.length === 0
+                    ? 'Clique para adicionar fotos'
+                    : 'Adicionar mais fotos'}
+                </span>
+              </div>
               <input
                 ref={fileRef}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={handleImageChange}
               />

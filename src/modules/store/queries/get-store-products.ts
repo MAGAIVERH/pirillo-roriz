@@ -2,6 +2,7 @@ import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
 import { releaseExpiredReservations } from '../lib/release-expired-reservations';
+import { parseProductImageUrls } from '../lib/parse-product-images';
 import {
   audienceToVisibility,
   getReservationExpiryDate,
@@ -54,6 +55,7 @@ export async function getStoreProducts(): Promise<StoreProduct[]> {
         priceInCents: true,
         stockQuantity: true,
         imageUrl: true,
+        galleryUrls: true,
         audience: true,
         active: true,
         createdAt: true,
@@ -119,6 +121,7 @@ export async function getStoreProducts(): Promise<StoreProduct[]> {
   return products.map((product) => {
     const reservedQuantity = reservedByProduct.get(product.id) ?? 0;
     const availableQuantity = product.stockQuantity;
+    const imageUrls = parseProductImageUrls(product.imageUrl, product.galleryUrls);
 
     return {
       id: product.id,
@@ -128,7 +131,8 @@ export async function getStoreProducts(): Promise<StoreProduct[]> {
       stockQuantity: product.stockQuantity,
       reservedQuantity,
       availableQuantity,
-      imageUrl: product.imageUrl,
+      imageUrl: imageUrls[0] ?? null,
+      imageUrls,
       visibility: audienceToVisibility(product.audience),
       active: product.active,
       pendingReservers: reserversByProduct.get(product.id) ?? [],

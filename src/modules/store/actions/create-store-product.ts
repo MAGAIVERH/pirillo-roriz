@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 
 import { buildUniqueProductSlug } from '../lib/build-unique-product-slug';
 import { ensureDefaultStoreCategory } from '../lib/ensure-default-store-category';
+import { resolveProductImagePayload } from '../lib/resolve-product-image-payload';
 import { visibilityToAudience } from '../lib/store-mappers';
 import {
   storeProductSchema,
@@ -31,7 +32,7 @@ export async function createStoreProductAction(
     const academy = await getOrCreateDefaultAcademy();
     const category = await ensureDefaultStoreCategory(academy.id);
     const slug = await buildUniqueProductSlug(academy.id, parsed.data.name);
-    const imageUrl = parsed.data.imageUrl?.trim() || null;
+    const { imageUrl, galleryUrls } = resolveProductImagePayload(parsed.data);
 
     await db.product.create({
       data: {
@@ -43,6 +44,7 @@ export async function createStoreProductAction(
         priceInCents: parsed.data.priceCents,
         stockQuantity: parsed.data.stockQuantity,
         imageUrl,
+        galleryUrls,
         audience: visibilityToAudience(parsed.data.visibility),
         pickupOnly: true,
         active: true,

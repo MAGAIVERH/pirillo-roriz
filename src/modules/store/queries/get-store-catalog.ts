@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import type { ProductAudience } from '@/generated/prisma/client';
 
 import { releaseExpiredReservations } from '../lib/release-expired-reservations';
+import { parseProductImageUrls } from '../lib/parse-product-images';
 import { audienceToVisibility } from '../lib/store-mappers';
 import type { StoreVisibility } from '../types/store';
 
@@ -13,6 +14,7 @@ export type StoreCatalogItem = {
   priceCents: number;
   availableQuantity: number;
   imageUrl: string | null;
+  imageUrls: string[];
   visibility: StoreVisibility;
   pickupOnly: boolean;
 };
@@ -49,19 +51,25 @@ export async function getStoreCatalog(
       priceInCents: true,
       stockQuantity: true,
       imageUrl: true,
+      galleryUrls: true,
       audience: true,
       pickupOnly: true,
     },
   });
 
-  return products.map((product) => ({
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    priceCents: product.priceInCents,
-    availableQuantity: product.stockQuantity,
-    imageUrl: product.imageUrl,
-    visibility: audienceToVisibility(product.audience),
-    pickupOnly: product.pickupOnly,
-  }));
+  return products.map((product) => {
+    const imageUrls = parseProductImageUrls(product.imageUrl, product.galleryUrls);
+
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      priceCents: product.priceInCents,
+      availableQuantity: product.stockQuantity,
+      imageUrl: imageUrls[0] ?? null,
+      imageUrls,
+      visibility: audienceToVisibility(product.audience),
+      pickupOnly: product.pickupOnly,
+    };
+  });
 }

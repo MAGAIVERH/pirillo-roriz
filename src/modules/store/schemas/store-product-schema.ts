@@ -19,6 +19,11 @@ export const storeProductSchema = z.object({
 
   imageUrl: z.string().max(2_000_000).optional().or(z.literal('')),
 
+  imageUrls: z
+    .array(z.string().max(2_000_000))
+    .max(10, 'Máximo de 10 fotos por produto.')
+    .optional(),
+
   visibility: z.enum(['todos', 'alunos', 'professores']),
 });
 

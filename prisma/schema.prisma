@@ -981,6 +981,7 @@ model Product {
   costInCents   Int?
   stockQuantity Int      @default(0)
   imageUrl      String?
+  galleryUrls   Json?
   active        Boolean  @default(true)
   pickupOnly    Boolean         @default(true)
   audience      ProductAudience @default(ALL)
