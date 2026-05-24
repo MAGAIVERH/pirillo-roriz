@@ -34,6 +34,7 @@ model User {
   stockMovements        StockMovement[]
   pickupRecords         PickupRecord[]
   announcements         Announcement[]
+  announcementReads     AnnouncementRead[]
   notifications         Notification[]
   statusChanges         StudentStatusHistory[]
   auditLogs             AuditLog[]
@@ -1089,6 +1090,7 @@ model Announcement {
   academy   Academy              @relation(fields: [academyId], references: [id], onDelete: Cascade)
   createdBy User                 @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
   targets   AnnouncementTarget[]
+  reads     AnnouncementRead[]
 
   @@index([academyId, publishedAt])
   @@index([visibilityScope])
@@ -1108,6 +1110,19 @@ model AnnouncementTarget {
   @@index([announcementId])
   @@index([classId])
   @@index([studentId])
+}
+
+model AnnouncementRead {
+  id             String   @id @default(cuid())
+  announcementId String
+  userId         String
+  readAt         DateTime @default(now())
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@index([userId])
 }
 
 model Notification {
