@@ -1,15 +1,8 @@
-import {
-  CalendarDays,
-  GraduationCap,
-  TriangleAlert,
-  Users,
-} from 'lucide-react';
-
 import { requireInstructorContext } from '@/lib/session-context';
-import { InstructorAttentionList } from '@/modules/instructor-portal/components/instructor-attention-list';
-import { InstructorSummaryCard } from '@/modules/instructor-portal/components/instructor-summary-card';
-import { InstructorTodayClasses } from '@/modules/instructor-portal/components/instructor-today-classes';
+import { InstructorDashboardShell } from '@/modules/instructor-portal/components/instructor-dashboard-shell';
+import { InstructorTodayAttendancePanel } from '@/modules/instructor-portal/components/instructor-today-attendance-panel';
 import { getInstructorDashboardOverview } from '@/modules/instructor-portal/queries/get-instructor-dashboard-overview';
+import { getInstructorTodayAttendance } from '@/modules/instructor-portal/queries/get-instructor-today-attendance';
 
 const NOW = new Date();
 
@@ -22,9 +15,13 @@ const HOUR_GREETING = (() => {
 
 export default async function ProfessorDashboardPage() {
   const { instructor } = await requireInstructorContext();
-  const overview = await getInstructorDashboardOverview(instructor.id);
-  const { stats } = overview;
 
+  const [overview, todayAttendance] = await Promise.all([
+    getInstructorDashboardOverview(instructor.id),
+    getInstructorTodayAttendance(instructor.id),
+  ]);
+
+  const { stats } = overview;
   const firstName = instructor.fullName.split(' ')[0];
 
   const summaryCards = [
@@ -32,39 +29,43 @@ export default async function ProfessorDashboardPage() {
       title: 'Turmas ativas',
       value: stats.classesCount,
       description: 'Turmas vinculadas a você.',
-      icon: CalendarDays,
-      href: '/professor/turmas',
+      iconKey: 'classes' as const,
       highlight: 'default' as const,
+      action: 'link' as const,
+      href: '/professor/turmas',
     },
     {
       title: 'Alunos',
       value: stats.studentsCount,
       description: 'Matriculados nas suas turmas.',
-      icon: Users,
-      href: '/professor/alunos',
+      iconKey: 'students' as const,
       highlight: 'default' as const,
+      action: 'link' as const,
+      href: '/professor/alunos',
     },
     {
       title: 'Aptos a graduar',
       value: stats.eligibleStudentsCount,
       description: 'Elegíveis para promoção.',
-      icon: GraduationCap,
-      href: '/professor/alunos?filtro=aptos',
+      iconKey: 'eligible' as const,
       highlight:
         stats.eligibleStudentsCount > 0
           ? ('success' as const)
           : ('default' as const),
+      action: 'modal' as const,
+      modal: 'eligible' as const,
     },
     {
       title: 'Inadimplentes',
       value: stats.delinquentStudentsCount,
       description: 'Presença bloqueada.',
-      icon: TriangleAlert,
-      href: '/professor/alunos?filtro=inadimplentes',
+      iconKey: 'delinquent' as const,
       highlight:
         stats.delinquentStudentsCount > 0
           ? ('warning' as const)
           : ('default' as const),
+      action: 'modal' as const,
+      modal: 'delinquent' as const,
     },
   ];
 
@@ -75,25 +76,18 @@ export default async function ProfessorDashboardPage() {
           {HOUR_GREETING}, {firstName}
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-zinc-400">
-          Acompanhe suas aulas de hoje, alunos que precisam de atenção e lance
-          presenças nas turmas.
+          Acompanhe suas aulas de hoje, marque presenças e acesse rapidamente
+          suas turmas e alunos.
         </p>
       </section>
 
-      <section className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map((card) => (
-          <InstructorSummaryCard key={card.title} {...card} />
-        ))}
-      </section>
-
-      <div className="grid min-w-0 gap-6 xl:grid-cols-2">
-        <InstructorTodayClasses classes={overview.todayClasses} />
-        <InstructorAttentionList
-          students={overview.attentionStudents}
-          eligibleCount={stats.eligibleStudentsCount}
-          delinquentCount={stats.delinquentStudentsCount}
-        />
-      </div>
+      <InstructorDashboardShell
+        summaryCards={summaryCards}
+        eligibleStudents={overview.eligibleStudents}
+        delinquentStudents={overview.delinquentStudents}
+      >
+        <InstructorTodayAttendancePanel attendance={todayAttendance} />
+      </InstructorDashboardShell>
     </div>
   );
 }

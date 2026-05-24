@@ -46,7 +46,8 @@ export type InstructorDashboardOverview = {
     delinquentStudentsCount: number;
   };
   todayClasses: InstructorTodayClassItem[];
-  attentionStudents: InstructorAttentionStudent[];
+  eligibleStudents: InstructorAttentionStudent[];
+  delinquentStudents: InstructorAttentionStudent[];
 };
 
 export async function getInstructorDashboardOverview(
@@ -137,14 +138,15 @@ export async function getInstructorDashboardOverview(
       ),
     }));
 
-  const attentionStudents: InstructorAttentionStudent[] = [];
+  const eligibleStudents: InstructorAttentionStudent[] = [];
+  const delinquentStudents: InstructorAttentionStudent[] = [];
 
   for (const student of students) {
     if (
       student.status === 'ACTIVE' &&
       student.progressStatus === 'ELIGIBLE'
     ) {
-      attentionStudents.push({
+      eligibleStudents.push({
         id: student.id,
         fullName: student.fullName,
         belt: student.belt,
@@ -153,7 +155,7 @@ export async function getInstructorDashboardOverview(
         reason: 'eligible',
       });
     } else if (student.status === 'DELINQUENT') {
-      attentionStudents.push({
+      delinquentStudents.push({
         id: student.id,
         fullName: student.fullName,
         belt: student.belt,
@@ -164,25 +166,22 @@ export async function getInstructorDashboardOverview(
     }
   }
 
-  attentionStudents.sort((a, b) => {
-    if (a.reason !== b.reason) {
-      return a.reason === 'eligible' ? -1 : 1;
-    }
-    return a.fullName.localeCompare(b.fullName, 'pt-BR');
-  });
+  eligibleStudents.sort((a, b) =>
+    a.fullName.localeCompare(b.fullName, 'pt-BR'),
+  );
+  delinquentStudents.sort((a, b) =>
+    a.fullName.localeCompare(b.fullName, 'pt-BR'),
+  );
 
   return {
     stats: {
       classesCount: classes.length,
       studentsCount: students.length,
-      eligibleStudentsCount: students.filter(
-        (s) => s.status === 'ACTIVE' && s.progressStatus === 'ELIGIBLE',
-      ).length,
-      delinquentStudentsCount: students.filter(
-        (s) => s.status === 'DELINQUENT',
-      ).length,
+      eligibleStudentsCount: eligibleStudents.length,
+      delinquentStudentsCount: delinquentStudents.length,
     },
     todayClasses,
-    attentionStudents: attentionStudents.slice(0, 6),
+    eligibleStudents,
+    delinquentStudents,
   };
 }

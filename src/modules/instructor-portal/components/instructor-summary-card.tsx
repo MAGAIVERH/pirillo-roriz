@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 
@@ -6,9 +8,11 @@ type InstructorSummaryCardProps = {
   value: number | string;
   description: string;
   icon: LucideIcon;
-  href: string;
   highlight?: 'default' | 'success' | 'warning' | 'danger';
-};
+} & (
+  | { href: string; onClick?: never }
+  | { href?: never; onClick: () => void }
+);
 
 const highlightStyles = {
   default: {
@@ -33,21 +37,17 @@ const highlightStyles = {
   },
 } as const;
 
-export function InstructorSummaryCard({
+const cardContent = ({
   title,
   value,
   description,
   icon: Icon,
-  href,
   highlight = 'default',
-}: InstructorSummaryCardProps) {
+}: Omit<InstructorSummaryCardProps, 'href' | 'onClick'>) => {
   const style = highlightStyles[highlight];
 
   return (
-    <Link
-      href={href}
-      className={`group block min-w-0 rounded-2xl border p-4 transition sm:p-5 ${style.card}`}
-    >
+    <>
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <p className="text-sm text-zinc-400">{title}</p>
@@ -66,6 +66,25 @@ export function InstructorSummaryCard({
       </div>
 
       <p className="text-sm leading-6 break-words text-zinc-400">{description}</p>
-    </Link>
+    </>
+  );
+};
+
+export function InstructorSummaryCard(props: InstructorSummaryCardProps) {
+  const style = highlightStyles[props.highlight ?? 'default'];
+  const className = `group block min-w-0 rounded-2xl border p-4 transition sm:p-5 ${style.card}`;
+
+  if (props.href) {
+    return (
+      <Link href={props.href} className={className}>
+        {cardContent(props)}
+      </Link>
+    );
+  }
+
+  return (
+    <button type="button" onClick={props.onClick} className={`${className} w-full text-left`}>
+      {cardContent(props)}
+    </button>
   );
 }
