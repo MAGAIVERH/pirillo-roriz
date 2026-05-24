@@ -60,7 +60,6 @@ export function StudentSidebar({ user, unreadWarnings }: StudentSidebarProps) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = !isMobile && state === 'collapsed';
   const hasUnreadWarnings = unreadWarnings > 0;
-  const isWarningsActive = getIsActive(pathname, '/aluno/avisos');
 
   const handleNavigate = () => {
     if (isMobile) {
@@ -92,18 +91,19 @@ export function StudentSidebar({ user, unreadWarnings }: StudentSidebarProps) {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="bg-zinc-950">
+      <SidebarContent className="bg-zinc-950 px-2 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-zinc-500">
-            Plataforma
-          </SidebarGroupLabel>
+          {!isCollapsed ? (
+            <SidebarGroupLabel className="text-zinc-500">
+              Plataforma
+            </SidebarGroupLabel>
+          ) : null}
           <SidebarGroupContent>
             <SidebarMenu>
               {navigation.map((item) => {
+                const Icon = item.icon;
                 const isActive = getIsActive(pathname, item.href);
                 const isWarningsItem = item.badgeKey === 'warnings';
-                const showWarningHighlight =
-                  isWarningsItem && hasUnreadWarnings && !isWarningsActive;
                 const badgeCount =
                   isWarningsItem && hasUnreadWarnings ? unreadWarnings : 0;
 
@@ -114,14 +114,16 @@ export function StudentSidebar({ user, unreadWarnings }: StudentSidebarProps) {
                       isActive={isActive}
                       tooltip={item.label}
                       className={
-                        showWarningHighlight
-                          ? 'border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/15 hover:text-red-200'
-                          : undefined
+                        isActive
+                          ? 'bg-red-600/15 text-white hover:bg-red-600/20 hover:text-white'
+                          : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
                       }
                     >
                       <Link href={item.href} onClick={handleNavigate}>
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{item.label}</span>
+                        <Icon className="h-4 w-4 shrink-0" />
+                        {!isCollapsed ? (
+                          <span className="truncate">{item.label}</span>
+                        ) : null}
                         {badgeCount > 0 ? (
                           <span className="ml-auto rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white">
                             {badgeCount}
