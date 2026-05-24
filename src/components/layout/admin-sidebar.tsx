@@ -29,6 +29,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { shellHeaderHeightClass } from '@/components/layout/shell-header';
 import { AdminUserMenu } from '@/modules/auth/components/admin-user-menu';
 
 const navigation = [
@@ -77,7 +78,7 @@ export const AdminSidebar = ({ user }: AdminSidebarProps) => {
     >
       <SidebarHeader className='border-b border-white/10 bg-zinc-950 p-0'>
         <div
-          className={`flex h-23 items-center ${
+          className={`flex ${shellHeaderHeightClass} items-center ${
             isCollapsed ? 'justify-center px-2' : 'justify-between gap-3 px-4'
           }`}
         >

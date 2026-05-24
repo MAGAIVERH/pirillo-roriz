@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
 
         <SidebarInset className='min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-black text-white'>
           <div className='flex min-h-screen min-w-0 max-w-full flex-col overflow-x-hidden'>
-            <AdminHeader userName={sessionUser.name} />
+            <AdminHeader />
 
             <main className='min-w-0 max-w-full flex-1 overflow-x-hidden bg-zinc-950/70 px-4 py-6 sm:px-6 lg:px-8'>
               <div className='mx-auto w-full min-w-0 max-w-[1600px]'>
