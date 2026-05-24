@@ -223,10 +223,13 @@ export function InstructorTodayAttendancePanel({
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500">
+          <Link
+            href="/professor/qr-code"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-600/10 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-600/20"
+          >
             <QrCode className="h-3.5 w-3.5" />
-            QR Code em breve
-          </span>
+            Ler QR Code
+          </Link>
           <Link
             href="/professor/turmas"
             className="text-xs font-medium text-red-400 transition hover:text-red-300"

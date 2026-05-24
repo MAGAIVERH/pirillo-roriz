@@ -29,13 +29,18 @@ import {
 import { shellHeaderHeightClass } from '@/components/layout/shell-header';
 import { PortalUserMenu } from '@/modules/auth/components/portal-user-menu';
 
-const navigation = [
+const navigation: {
+  label: string;
+  href: string;
+  icon: typeof Home;
+  disabled?: boolean;
+}[] = [
   { label: 'Início', href: '/professor', icon: Home },
   { label: 'Alunos', href: '/professor/alunos', icon: Users },
   { label: 'Turmas', href: '/professor/turmas', icon: CalendarDays },
   { label: 'Avisos', href: '/professor/avisos', icon: Megaphone },
   { label: 'Loja', href: '/professor/loja', icon: ShoppingBag },
-  { label: 'QR Code', href: '/professor/qr-code', icon: QrCode, disabled: true },
+  { label: 'QR Code', href: '/professor/qr-code', icon: QrCode },
 ];
 
 const getIsActive = (pathname: string, href: string) => {
