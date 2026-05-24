@@ -23,7 +23,7 @@ const PORTALS: PortalLink[] = [
     variant: 'primary',
   },
   {
-    href: '/professor',
+    href: '/professor/login',
     title: 'Portal do professor',
     description: 'Lançar presenças, acompanhar turmas e graduações.',
     icon: GraduationCap,
