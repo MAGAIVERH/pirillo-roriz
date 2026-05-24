@@ -1,5 +1,11 @@
 import { auth } from '@/lib/auth';
 
-const handler = auth.handler;
+export const dynamic = 'force-dynamic';
 
-export { handler as GET, handler as POST };
+export function GET(request: Request) {
+  return auth.handler(request);
+}
+
+export function POST(request: Request) {
+  return auth.handler(request);
+}
