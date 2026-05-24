@@ -12,6 +12,7 @@ import {
 import { assertAdminAction } from '@/lib/admin-action';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
+import { formatMailFailureSuffix } from '@/lib/mail';
 import {
   createStudentSchema,
   type CreateStudentSchema,
@@ -293,15 +294,14 @@ export const createStudentAction = async (
         ? ' Este email já pertence a um professor — o acesso de aluno foi liberado com o mesmo login e senha. Email de confirmação enviado.'
         : provisioning.emailSent
           ? ' Este email já tinha cadastro no sistema — o acesso de aluno foi liberado com o mesmo login e senha. Email de confirmação enviado.'
-          : ' Este email já tinha cadastro no sistema — o acesso de aluno foi liberado com o mesmo login e senha, mas o email não pôde ser enviado.';
+          : ` Este email já tinha cadastro no sistema — o acesso de aluno foi liberado com o mesmo login e senha.${formatMailFailureSuffix(provisioning.mailFailureReason)}`;
     } else if (provisioning.reusedExisting) {
       accessSuffix =
         ' Este email já tinha cadastro no sistema — o aluno usa o mesmo login e senha do acesso existente.';
     } else if (provisioning.emailSent) {
       accessSuffix = ' Email com acesso provisório enviado.';
     } else {
-      accessSuffix =
-        ' Acesso criado, mas o email de boas-vindas não pôde ser enviado.';
+      accessSuffix = formatMailFailureSuffix(provisioning.mailFailureReason);
     }
 
     return {

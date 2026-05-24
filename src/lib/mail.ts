@@ -5,10 +5,19 @@ type SendMailInput = {
   text?: string;
 };
 
-type SendMailResult = {
+export type SendMailResult = {
   sent: boolean;
   reason?: string;
 };
+
+function parseResendError(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { message?: string };
+    return parsed.message?.trim() || body;
+  } catch {
+    return body.trim();
+  }
+}
 
 /**
  * Wrapper minimalista de envio de email.
@@ -29,7 +38,7 @@ export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
     console.info(`[mail] To: ${input.to}`);
     console.info(`[mail] Subject: ${input.subject}`);
     console.info(`[mail] Plain text fallback:\n${input.text ?? '(html only)'}`);
-    return { sent: false, reason: 'RESEND_API_KEY ausente.' };
+    return { sent: false, reason: 'RESEND_API_KEY não configurada na Vercel.' };
   }
 
   try {
@@ -50,13 +59,25 @@ export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
 
     if (!response.ok) {
       const body = await response.text();
-      console.error('[mail] envio falhou', response.status, body);
-      return { sent: false, reason: `HTTP ${response.status}` };
+      const resendMessage = parseResendError(body);
+      console.error('[mail] envio falhou', response.status, resendMessage);
+      return {
+        sent: false,
+        reason: `Resend (${response.status}): ${resendMessage}`,
+      };
     }
 
     return { sent: true };
   } catch (error) {
     console.error('[mail] erro inesperado', error);
-    return { sent: false, reason: 'Exceção ao chamar provider.' };
+    return { sent: false, reason: 'Falha de rede ao chamar a Resend.' };
   }
+}
+
+export function formatMailFailureSuffix(reason?: string): string {
+  if (!reason) {
+    return ' Acesso criado, mas o email de boas-vindas não pôde ser enviado.';
+  }
+
+  return ` Acesso criado, mas o email não foi enviado: ${reason}`;
 }

@@ -4,7 +4,7 @@ import { AppRole } from '@/generated/prisma/client';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { generateTemporaryPassword } from '@/lib/generate-temporary-password';
-import { sendMail } from '@/lib/mail';
+import { sendMail, formatMailFailureSuffix } from '@/lib/mail';
 
 import { buildRoleAddedEmail } from '../templates/role-added-email';
 import {
@@ -25,6 +25,7 @@ type ProvisionUserAccountResult = {
   success: boolean;
   userId?: string;
   emailSent: boolean;
+  mailFailureReason?: string;
   /**
    * `true` quando o helper encontrou um User existente com o mesmo email
    * e apenas adicionou o novo papel (sem regenerar senha).
@@ -116,19 +117,27 @@ export async function provisionUserAccount(
       });
 
       emailSent = mailResult.sent;
+
+      return {
+        success: true,
+        userId: existing.id,
+        emailSent,
+        mailFailureReason: mailResult.sent ? undefined : mailResult.reason,
+        reusedExisting: true,
+        roleAdded,
+        message: emailSent
+          ? 'Conta existente reutilizada. Novo papel adicionado e email enviado.'
+          : `Conta existente reutilizada. Novo papel adicionado.${formatMailFailureSuffix(mailResult.reason)}`,
+      };
     }
 
     return {
       success: true,
       userId: existing.id,
-      emailSent,
+      emailSent: false,
       reusedExisting: true,
-      roleAdded,
-      message: roleAdded
-        ? emailSent
-          ? 'Conta existente reutilizada. Novo papel adicionado e email enviado.'
-          : 'Conta existente reutilizada. Novo papel adicionado, mas o email não pôde ser enviado.'
-        : 'Usuário já possuía este papel. Mesmo login e senha mantidos.',
+      roleAdded: false,
+      message: 'Usuário já possuía este papel. Mesmo login e senha mantidos.',
     };
   }
 
@@ -199,10 +208,11 @@ export async function provisionUserAccount(
     success: true,
     userId,
     emailSent: mailResult.sent,
+    mailFailureReason: mailResult.sent ? undefined : mailResult.reason,
     reusedExisting: false,
     roleAdded: false,
     message: mailResult.sent
       ? 'Conta criada e email enviado.'
-      : 'Conta criada, mas o email de boas-vindas não pôde ser enviado.',
+      : `Conta criada.${formatMailFailureSuffix(mailResult.reason)}`,
   };
 }
