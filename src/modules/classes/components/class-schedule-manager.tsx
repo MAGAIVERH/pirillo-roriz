@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -73,6 +73,19 @@ export const ClassScheduleManager = ({
   const [instructorId, setInstructorId] = useState(
     currentInstructorId || '__none__',
   );
+  const [settingsKey, setSettingsKey] = useState(
+    `${currentName}|${currentTypeName}|${currentCapacity ?? ''}|${currentInstructorId}`,
+  );
+
+  const nextSettingsKey = `${currentName}|${currentTypeName}|${currentCapacity ?? ''}|${currentInstructorId}`;
+
+  if (nextSettingsKey !== settingsKey) {
+    setSettingsKey(nextSettingsKey);
+    setName(currentName);
+    setClassTypeName(currentTypeName);
+    setCapacity(currentCapacity ? String(currentCapacity) : '');
+    setInstructorId(currentInstructorId || '__none__');
+  }
 
   const [weekDay, setWeekDay] = useState<WeekDayValue | ''>('');
   const [startTime, setStartTime] = useState('');
@@ -81,22 +94,6 @@ export const ClassScheduleManager = ({
   const [isUpdatingSettings, startSettingsTransition] = useTransition();
   const [isCreating, startCreateTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setName(currentName);
-  }, [currentName]);
-
-  useEffect(() => {
-    setClassTypeName(currentTypeName);
-  }, [currentTypeName]);
-
-  useEffect(() => {
-    setCapacity(currentCapacity ? String(currentCapacity) : '');
-  }, [currentCapacity]);
-
-  useEffect(() => {
-    setInstructorId(currentInstructorId || '__none__');
-  }, [currentInstructorId]);
 
   const handleUpdateSettings = () => {
     startSettingsTransition(async () => {

@@ -1,12 +1,15 @@
 import { Archive, AlertTriangle, BookmarkCheck, ShoppingBag } from 'lucide-react';
 
 import { StoreClientView } from '@/modules/store/components/store-client-view';
+import { ensureStoreReservationsReleased } from '@/modules/store/lib/ensure-store-reservations-released';
 import { getStoreOverviewStats } from '@/modules/store/queries/get-store-overview-stats';
 import { getStoreProducts } from '@/modules/store/queries/get-store-products';
 import { getStoreReservations } from '@/modules/store/queries/get-store-reservations';
 import { STORE_RESERVATION_EXPIRY_DAYS } from '@/modules/store/lib/store-constants';
 
 export default async function AdminLojaPage() {
+  await ensureStoreReservationsReleased();
+
   const [products, reservations, stats] = await Promise.all([
     getStoreProducts(),
     getStoreReservations(),

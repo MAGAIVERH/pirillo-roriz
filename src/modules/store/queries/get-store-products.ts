@@ -1,7 +1,6 @@
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
-import { releaseExpiredReservations } from '../lib/release-expired-reservations';
 import { parseProductImageUrls } from '../lib/parse-product-images';
 import {
   audienceToVisibility,
@@ -42,7 +41,6 @@ function resolveReserverName(order: {
 
 export async function getStoreProducts(): Promise<StoreProduct[]> {
   const academy = await getOrCreateDefaultAcademy();
-  await releaseExpiredReservations(academy.id);
 
   const [products, pendingOrders] = await Promise.all([
     db.product.findMany({

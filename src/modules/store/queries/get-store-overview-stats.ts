@@ -1,12 +1,10 @@
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
-import { releaseExpiredReservations } from '../lib/release-expired-reservations';
 import type { StoreOverviewStats } from '../types/store';
 
 export async function getStoreOverviewStats(): Promise<StoreOverviewStats> {
   const academy = await getOrCreateDefaultAcademy();
-  await releaseExpiredReservations(academy.id);
 
   const [totalProducts, stockAggregate, pendingReservations, products] =
     await Promise.all([

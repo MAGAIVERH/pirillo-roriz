@@ -52,7 +52,7 @@ const cardContent = ({
         <div className="min-w-0 space-y-1">
           <p className="text-sm text-zinc-400">{title}</p>
           <p
-            className={`text-2xl font-bold tracking-tight break-words sm:text-3xl ${style.value}`}
+            className={`text-2xl font-bold tracking-tight wrap-break-word sm:text-3xl ${style.value}`}
           >
             {value}
           </p>
@@ -65,7 +65,7 @@ const cardContent = ({
         </div>
       </div>
 
-      <p className="text-sm leading-6 break-words text-zinc-400">{description}</p>
+      <p className="text-sm leading-6 wrap-break-word text-zinc-400">{description}</p>
     </>
   );
 };

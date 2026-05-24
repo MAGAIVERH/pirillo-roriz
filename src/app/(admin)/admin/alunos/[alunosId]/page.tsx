@@ -27,7 +27,7 @@ import { getStudentAttendanceHistory } from '@/modules/students/queries/get-stud
 import { getStudentById } from '@/modules/students/queries/get-student-by-id';
 import { getStudentEligibility } from '@/modules/students/queries/get-eligible-students';
 import { getCancellationReasons } from '@/modules/students/queries/get-cancellation-reasons';
-import { calculateStudentProgress } from '@/modules/students/lib/calcule-student-progress';
+import { getStudentProgressSnapshot } from '@/modules/students/lib/calcule-student-progress';
 import { getStudentFinanceSummary } from '@/modules/finance/queries/get-student-finance-summary';
 
 type AdminAlunoDetailsPageProps = {
@@ -50,7 +50,7 @@ export default async function AdminAlunoDetailsPage({
   ] = await Promise.all([
     getStudentById(alunosId),
     getStudentAttendanceHistory(alunosId),
-    calculateStudentProgress(alunosId),
+    getStudentProgressSnapshot(alunosId),
     getStudentFinanceSummary(alunosId),
     getCancellationReasons(),
   ]);
@@ -95,7 +95,7 @@ export default async function AdminAlunoDetailsPage({
                 {student.fullName}
               </h1>
 
-              <p className='max-w-3xl text-sm leading-6 break-words text-zinc-400'>
+              <p className='max-w-3xl text-sm leading-6 wrap-break-word text-zinc-400'>
                 Aqui você acompanha os dados do aluno e pode lançar presença
                 manual para histórico e migração da base antiga.
               </p>

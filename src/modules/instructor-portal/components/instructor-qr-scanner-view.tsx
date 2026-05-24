@@ -68,12 +68,6 @@ export function InstructorQrScannerView({
 
   const openSessions = sessions.filter((session) => session.isCheckInOpen);
 
-  useEffect(() => {
-    return () => {
-      void stopScanner();
-    };
-  }, []);
-
   const stopScanner = async () => {
     if (!scannerRef.current) {
       setIsScannerActive(false);
@@ -92,6 +86,12 @@ export function InstructorQrScannerView({
       setIsScannerActive(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      void stopScanner();
+    };
+  }, []);
 
   const handleScan = (qrPayload: string) => {
     if (!selectedSessionId || isPending) {

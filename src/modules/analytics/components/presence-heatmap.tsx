@@ -57,7 +57,7 @@ function DayCell({ day, max }: DayCellProps) {
 
   return (
     <div
-      className={`size-[var(--week-col)] shrink-0 rounded-[4px] md:justify-self-center md:rounded-[2px] ${tone} ${
+      className={`size-(--week-col) shrink-0 rounded-[4px] md:justify-self-center md:rounded-[2px] ${tone} ${
         day.isToday && day.isInWindow ? 'ring-1 ring-inset ring-red-400' : ''
       } ${day.isInWindow && !day.inMonth && !day.isFuture ? 'opacity-45' : ''}`}
       title={formatDayTooltip(day)}
@@ -151,7 +151,7 @@ export function PresenceHeatmap({
             {WEEKDAY_LABELS.map((label) => (
               <span
                 key={label}
-                className="flex h-[var(--week-col)] shrink-0 items-center justify-end pr-1 text-[10px] font-medium text-zinc-500"
+                className="flex h-(--week-col) shrink-0 items-center justify-end pr-1 text-[10px] font-medium text-zinc-500"
               >
                 {label}
               </span>
@@ -185,7 +185,7 @@ export function PresenceHeatmap({
                     return (
                       <div
                         key={`${week.weekIndex}-${label}`}
-                        className="size-[var(--week-col)] shrink-0"
+                        className="size-(--week-col) shrink-0"
                         aria-hidden
                       />
                     );
@@ -219,7 +219,7 @@ export function PresenceHeatmap({
 
             {WEEKDAY_LABELS.map((label, rowIndex) => (
               <Fragment key={label}>
-                <span className="flex h-[var(--week-col)] items-center justify-end pr-1.5 text-[10px] font-medium text-zinc-500">
+                <span className="flex h-(--week-col) items-center justify-end pr-1.5 text-[10px] font-medium text-zinc-500">
                   {label}
                 </span>
 
@@ -230,7 +230,7 @@ export function PresenceHeatmap({
                     return (
                       <div
                         key={`${week.weekIndex}-${label}`}
-                        className="size-[var(--week-col)] shrink-0 justify-self-center"
+                        className="size-(--week-col) shrink-0 justify-self-center"
                         aria-hidden
                       />
                     );

@@ -26,7 +26,7 @@ export async function markStudentWarningReadAction(
   }
 
   try {
-    const { user, student } = await requireStudentContext();
+    const { user } = await requireStudentContext();
     const academy = await getOrCreateDefaultAcademy();
 
     const announcement = await db.announcement.findFirst({

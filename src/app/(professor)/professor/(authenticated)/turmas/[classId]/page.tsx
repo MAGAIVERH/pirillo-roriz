@@ -41,7 +41,7 @@ export default async function ProfessorClassDetailPage({
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 {classDetail.name}
               </h1>
-              <p className="max-w-3xl text-sm leading-6 break-words text-zinc-400">
+              <p className="max-w-3xl text-sm leading-6 wrap-break-word text-zinc-400">
                 {classDetail.description}
               </p>
             </div>

@@ -1,24 +1,9 @@
 import { AdminBackButton } from '@/components/layout/admin-back-button';
-import { getOrCreateDefaultAcademy } from '@/lib/academy';
-import { db } from '@/lib/db';
 import { ClassCreateForm } from '@/modules/classes/components/class-create-form';
+import { getActiveInstructorsOptions } from '@/modules/instructors/queries/get-active-instructors-options';
 
 export default async function AdminNovaTurmaPage() {
-  const academy = await getOrCreateDefaultAcademy();
-
-  const availableProfessors = await db.instructor.findMany({
-    where: {
-      academyId: academy.id,
-      active: true,
-    },
-    orderBy: {
-      fullName: 'asc',
-    },
-    select: {
-      id: true,
-      fullName: true,
-    },
-  });
+  const availableProfessors = await getActiveInstructorsOptions();
 
   return (
     <div className='min-w-0 space-y-6'>
@@ -35,7 +20,7 @@ export default async function AdminNovaTurmaPage() {
               Nova turma
             </h1>
 
-            <p className='max-w-3xl text-sm leading-6 break-words text-zinc-400'>
+            <p className='max-w-3xl text-sm leading-6 wrap-break-word text-zinc-400'>
               Aqui você cria a turma completa, já definindo nome, tipo,
               capacidade, professor responsável e horários iniciais.
             </p>

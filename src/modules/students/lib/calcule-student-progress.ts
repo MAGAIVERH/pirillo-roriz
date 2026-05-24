@@ -1,4 +1,9 @@
-import { GraduationProgram, ProgressStatus } from '@/generated/prisma/client';
+import {
+  GraduationProgram,
+  ProgressStatus,
+  type GraduationRule,
+  type StudentProgress,
+} from '@/generated/prisma/client';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
@@ -32,7 +37,44 @@ const getStudentAge = (birthDate: Date | null, referenceDate: Date) => {
   return age;
 };
 
-export const calculateStudentProgress = async (studentId: string) => {
+export type StudentProgressComputation = {
+  program: GraduationProgram;
+  projectedEligibilityDate: Date;
+  status: ProgressStatus;
+  attendancesSincePromotion: number;
+  absencesSincePromotion: number;
+  lastAttendanceAt: Date | null;
+};
+
+export type StudentProgressSuccess = {
+  success: true;
+  progress: StudentProgress;
+  rule: GraduationRule;
+  baseDate: Date;
+  currentBeltName: string;
+  currentDegreeNumber: number | null;
+};
+
+export type StudentProgressFailure = {
+  success: false;
+  message: string;
+};
+
+export type StudentProgressResult = StudentProgressSuccess | StudentProgressFailure;
+
+async function computeStudentProgressData(studentId: string): Promise<
+  | {
+      success: true;
+      studentId: string;
+      academyId: string;
+      computation: StudentProgressComputation;
+      rule: GraduationRule;
+      baseDate: Date;
+      currentBeltName: string;
+      currentDegreeNumber: number | null;
+    }
+  | StudentProgressFailure
+> {
   const academy = await getOrCreateDefaultAcademy();
 
   const student = await db.student.findFirst({
@@ -40,11 +82,27 @@ export const calculateStudentProgress = async (studentId: string) => {
       id: studentId,
       academyId: academy.id,
     },
-    include: {
+    select: {
+      id: true,
+      birthDate: true,
+      joinDate: true,
+      createdAt: true,
       beltStatus: {
-        include: {
-          currentBelt: true,
-          currentDegree: true,
+        select: {
+          promotedAt: true,
+          currentBeltId: true,
+          currentDegreeId: true,
+          currentBelt: {
+            select: {
+              name: true,
+              juvenileCategory: true,
+            },
+          },
+          currentDegree: {
+            select: {
+              degreeNumber: true,
+            },
+          },
         },
       },
       graduationHistory: {
@@ -52,9 +110,13 @@ export const calculateStudentProgress = async (studentId: string) => {
           promotedAt: 'desc',
         },
         take: 1,
+        select: {
+          promotedAt: true,
+        },
       },
       attendances: {
-        include: {
+        select: {
+          status: true,
           classSession: {
             select: {
               sessionDate: true,
@@ -72,7 +134,7 @@ export const calculateStudentProgress = async (studentId: string) => {
 
   if (!student || !student.beltStatus) {
     return {
-      success: false as const,
+      success: false,
       message: 'Aluno ou faixa atual não encontrados.',
     };
   }
@@ -92,7 +154,6 @@ export const calculateStudentProgress = async (studentId: string) => {
     student.createdAt;
 
   const baseDate = startOfDayUtc(baseDateRaw);
-
   const referenceAge = getStudentAge(student.birthDate, new Date());
 
   const matchingRule = await db.graduationRule.findFirst({
@@ -105,38 +166,25 @@ export const calculateStudentProgress = async (studentId: string) => {
       ...(program === GraduationProgram.KIDS
         ? {
             OR: [
-              {
-                minAge: null,
-              },
-              {
-                minAge: {
-                  lte: referenceAge ?? 0,
-                },
-              },
+              { minAge: null },
+              { minAge: { lte: referenceAge ?? 0 } },
             ],
           }
         : {}),
     },
-    orderBy: [
-      {
-        minAge: 'asc',
-      },
-      {
-        displayOrder: 'asc',
-      },
-    ],
+    orderBy: [{ minAge: 'asc' }, { displayOrder: 'asc' }],
   });
 
   if (!matchingRule) {
     return {
-      success: false as const,
+      success: false,
       message: 'Nenhuma regra de graduação compatível foi encontrada.',
     };
   }
 
-  const attendancesSinceBase = student.attendances.filter((attendance) => {
-    return attendance.classSession.sessionDate >= baseDate;
-  });
+  const attendancesSinceBase = student.attendances.filter(
+    (attendance) => attendance.classSession.sessionDate >= baseDate,
+  );
 
   const presentStatuses = new Set(['PRESENT', 'LATE']);
   const absenceStatuses = new Set(['ABSENT']);
@@ -174,39 +222,102 @@ export const calculateStudentProgress = async (studentId: string) => {
     status = ProgressStatus.POSTPONED;
   }
 
-  const progress = await db.studentProgress.upsert({
-    where: {
-      studentId: student.id,
-    },
-    update: {
-      academyId: academy.id,
+  return {
+    success: true,
+    studentId: student.id,
+    academyId: academy.id,
+    computation: {
       program,
       projectedEligibilityDate,
       status,
       attendancesSincePromotion,
       absencesSincePromotion,
       lastAttendanceAt: lastAttendance?.classSession.sessionDate ?? null,
+    },
+    rule: matchingRule,
+    baseDate,
+    currentBeltName: currentBelt.name,
+    currentDegreeNumber: student.beltStatus.currentDegree?.degreeNumber ?? null,
+  };
+}
+
+export async function getStudentProgressSnapshot(
+  studentId: string,
+): Promise<StudentProgressResult> {
+  const computed = await computeStudentProgressData(studentId);
+
+  if (!computed.success) {
+    return computed;
+  }
+
+  const existing = await db.studentProgress.findFirst({
+    where: {
+      studentId: computed.studentId,
+      academyId: computed.academyId,
+    },
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      lastRecalculatedAt: true,
+    },
+  });
+
+  const now = new Date();
+
+  const progress: StudentProgress = {
+    id: existing?.id ?? computed.studentId,
+    academyId: computed.academyId,
+    studentId: computed.studentId,
+    notes: null,
+    ...computed.computation,
+    lastRecalculatedAt: existing?.lastRecalculatedAt ?? now,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: existing?.updatedAt ?? now,
+  };
+
+  return {
+    success: true,
+    progress,
+    rule: computed.rule,
+    baseDate: computed.baseDate,
+    currentBeltName: computed.currentBeltName,
+    currentDegreeNumber: computed.currentDegreeNumber,
+  };
+}
+
+export const calculateStudentProgress = async (
+  studentId: string,
+): Promise<StudentProgressResult> => {
+  const computed = await computeStudentProgressData(studentId);
+
+  if (!computed.success) {
+    return computed;
+  }
+
+  const progress = await db.studentProgress.upsert({
+    where: {
+      studentId: computed.studentId,
+    },
+    update: {
+      academyId: computed.academyId,
+      ...computed.computation,
       lastRecalculatedAt: new Date(),
     },
     create: {
-      academyId: academy.id,
-      studentId: student.id,
-      program,
-      projectedEligibilityDate,
-      status,
-      attendancesSincePromotion,
-      absencesSincePromotion,
-      lastAttendanceAt: lastAttendance?.classSession.sessionDate ?? null,
+      academyId: computed.academyId,
+      studentId: computed.studentId,
+      ...computed.computation,
       lastRecalculatedAt: new Date(),
     },
   });
 
   return {
-    success: true as const,
+    success: true,
     progress,
-    rule: matchingRule,
-    baseDate,
-    currentBeltName: currentBelt.name,
-    currentDegreeNumber: student.beltStatus.currentDegree?.degreeNumber ?? null,
+    rule: computed.rule,
+    baseDate: computed.baseDate,
+    currentBeltName: computed.currentBeltName,
+    currentDegreeNumber: computed.currentDegreeNumber,
   };
 };

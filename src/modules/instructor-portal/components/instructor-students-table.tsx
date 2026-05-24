@@ -48,7 +48,7 @@ const StudentInfoRow = ({
       <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
         {label}
       </p>
-      <p className="mt-0.5 break-words text-sm text-zinc-300">{value}</p>
+      <p className="mt-0.5 wrap-break-word text-sm text-zinc-300">{value}</p>
     </div>
   </div>
 );

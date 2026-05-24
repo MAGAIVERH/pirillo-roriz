@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -36,10 +36,12 @@ export function InstructorStoreProductDetailModal({
   allowReserve = true,
 }: InstructorStoreProductDetailModalProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [galleryProductId, setGalleryProductId] = useState(product?.id ?? '');
 
-  useEffect(() => {
+  if (product && product.id !== galleryProductId) {
+    setGalleryProductId(product.id);
     setActiveIndex(0);
-  }, [product?.id]);
+  }
 
   if (!product) {
     return null;

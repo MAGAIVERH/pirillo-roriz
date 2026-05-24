@@ -7,7 +7,7 @@ import {
   getStudentsMissingGraduationRule,
   type StudentMissingRule,
 } from '@/modules/students/queries/get-students-missing-graduation-rule';
-import { syncStudentDelinquencyStatus } from '@/modules/students/actions/sync-student-delinquency';
+import { runStudentDelinquencySync } from '@/modules/students/lib/sync-student-delinquency-core';
 
 import {
   formatBRL,
@@ -28,7 +28,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
   const academy = await getOrCreateDefaultAcademy();
   // Garante que faturas vencidas viram OVERDUE e que o status do aluno
   // reflete a inadimplência antes de calcular qualquer métrica.
-  await syncStudentDelinquencyStatus();
+  await runStudentDelinquencySync();
   const now = new Date();
 
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

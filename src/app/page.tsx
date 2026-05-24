@@ -105,7 +105,7 @@ export default function Home() {
         </div>
 
         <p className="mt-8 text-center text-[11px] uppercase tracking-[0.3em] text-zinc-600">
-          Academia · Niterói / RJ
+          Academia · Fortaleza / Ceará
         </p>
       </div>
     </main>

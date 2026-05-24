@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { CalendarIcon } from 'lucide-react';
 import { format, isValid, parse } from 'date-fns';
@@ -76,14 +76,16 @@ export function DateInput({
   invalid,
   id,
 }: DateInputProps) {
-  const [text, setText] = useState<string>(
-    value ? format(value, 'dd/MM/yyyy') : '',
-  );
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const formattedValue = value ? format(value, 'dd/MM/yyyy') : '';
+  const [text, setText] = useState(formattedValue);
+  const [lastSyncedValue, setLastSyncedValue] = useState(formattedValue);
 
-  useEffect(() => {
-    setText(value ? format(value, 'dd/MM/yyyy') : '');
-  }, [value]);
+  if (formattedValue !== lastSyncedValue) {
+    setLastSyncedValue(formattedValue);
+    setText(formattedValue);
+  }
+
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const handleTextChange = (event: ChangeEvent<HTMLInputElement>) => {
     const masked = applyMask(event.target.value);

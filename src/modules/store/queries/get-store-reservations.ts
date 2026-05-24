@@ -1,7 +1,6 @@
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
-import { releaseExpiredReservations } from '../lib/release-expired-reservations';
 import { getReservationExpiryDate } from '../lib/store-mappers';
 import type {
   ReservationUserType,
@@ -23,7 +22,6 @@ function mapOrderStatus(status: string): StoreReservationStatus {
 
 export async function getStoreReservations(): Promise<StoreReservation[]> {
   const academy = await getOrCreateDefaultAcademy();
-  await releaseExpiredReservations(academy.id);
 
   const orders = await db.order.findMany({
     where: {

@@ -1,10 +1,13 @@
 import { requireInstructorContext } from '@/lib/session-context';
 import { InstructorStoreView } from '@/modules/instructor-portal/components/instructor-store-view';
 import { getInstructorStoreReservations } from '@/modules/instructor-portal/queries/get-instructor-store-reservations';
+import { ensureStoreReservationsReleased } from '@/modules/store/lib/ensure-store-reservations-released';
 import { getStoreCatalog } from '@/modules/store/queries/get-store-catalog';
 
 export default async function ProfessorStorePage() {
   const { instructor } = await requireInstructorContext();
+
+  await ensureStoreReservationsReleased();
 
   const [products, reservations] = await Promise.all([
     getStoreCatalog('instructor'),

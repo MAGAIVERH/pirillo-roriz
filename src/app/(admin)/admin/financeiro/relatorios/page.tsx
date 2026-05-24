@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import {
   BadgeDollarSign,
   FileText,
@@ -7,7 +6,6 @@ import {
 } from 'lucide-react';
 
 import { AdminBackButton } from '@/components/layout/admin-back-button';
-import { Button } from '@/components/ui/button';
 import { FinanceReportFilter } from '@/modules/finance/components/finance-report-filter';
 import { FinanceReportByPlanTable } from '@/modules/finance/components/finance-report-by-plan-table';
 import { FinanceReportPaymentsTable } from '@/modules/finance/components/finance-report-payments-table';

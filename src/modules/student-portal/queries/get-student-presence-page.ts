@@ -5,7 +5,7 @@ import {
   formatMinimumMonthsLabel,
 } from '@/modules/students/lib/calculate-journey-progress';
 import { buildJourneyHeatmapWeeks } from '@/modules/students/lib/build-journey-heatmap';
-import { calculateStudentProgress } from '@/modules/students/lib/calcule-student-progress';
+import { getStudentProgressSnapshot } from '@/modules/students/lib/calcule-student-progress';
 
 import type { JourneyHeatmapWeek } from '@/modules/students/lib/build-journey-heatmap';
 
@@ -105,7 +105,7 @@ export async function getStudentPresencePage(
           },
         },
       }),
-      calculateStudentProgress(studentId),
+      getStudentProgressSnapshot(studentId),
     ]);
 
   const journeyAttendances = attendanceHistory.map((item) => ({

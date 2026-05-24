@@ -493,7 +493,7 @@ export const StudentAttendanceHistoryCard = ({
                 </div>
 
                 <div className='min-w-0 space-y-1'>
-                  <p className='text-sm font-medium leading-6 break-words text-white'>
+                  <p className='text-sm font-medium leading-6 wrap-break-word text-white'>
                     {selectedDates.length === 0
                       ? 'Selecione as datas retroativas do atleta para contabilizar a frequência na próxima graduação.'
                       : selectedDates.length === 1 && selectedDate
@@ -883,7 +883,7 @@ export const StudentAttendanceHistoryCard = ({
                 Últimos lançamentos
               </p>
 
-              <div className='max-h-80 space-y-3 overflow-y-auto pr-1 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+              <div className='max-h-80 space-y-3 overflow-y-auto pr-1 scrollbar-hide [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden'>
                 {attendances.length > 0 ? (
                   attendances.slice(0, 6).map((item) => (
                     <div
@@ -895,7 +895,7 @@ export const StudentAttendanceHistoryCard = ({
                         {statusLabelMap[item.status] ?? item.status}
                       </p>
                       {item.notes && item.notes !== '-' ? (
-                        <p className='mt-1 text-xs leading-5 break-words text-zinc-500'>
+                        <p className='mt-1 text-xs leading-5 wrap-break-word text-zinc-500'>
                           {item.notes}
                         </p>
                       ) : null}

@@ -23,7 +23,7 @@ import {
 import { StudentAttendanceHistoryCard } from '@/modules/students/components/student-attendance-history-card';
 import { StudentProgressCard } from '@/modules/students/components/student-progress-card';
 import { StudentStatusBadge } from '@/modules/students/components/student-status-badge';
-import { calculateStudentProgress } from '@/modules/students/lib/calcule-student-progress';
+import { getStudentProgressSnapshot } from '@/modules/students/lib/calcule-student-progress';
 import { getStudentAttendanceHistory } from '@/modules/students/queries/get-student-attendance-history';
 import { getStudentById } from '@/modules/students/queries/get-student-by-id';
 import { getStudentEligibility } from '@/modules/students/queries/get-eligible-students';
@@ -57,7 +57,7 @@ export default async function ProfessorStudentDetailPage({
   const [student, attendances, progressResult] = await Promise.all([
     getStudentById(studentId),
     getStudentAttendanceHistory(studentId),
-    calculateStudentProgress(studentId),
+    getStudentProgressSnapshot(studentId),
   ]);
 
   const eligibility = await getStudentEligibility(studentId);
@@ -102,7 +102,7 @@ export default async function ProfessorStudentDetailPage({
                 {student.fullName}
               </h1>
 
-              <p className="max-w-3xl text-sm leading-6 break-words text-zinc-400">
+              <p className="max-w-3xl text-sm leading-6 wrap-break-word text-zinc-400">
                 Acompanhe a frequência, progresso de graduação e lance
                 presenças manualmente.
               </p>

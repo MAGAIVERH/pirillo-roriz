@@ -2,7 +2,6 @@ import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 import type { ProductAudience } from '@/generated/prisma/client';
 
-import { releaseExpiredReservations } from '../lib/release-expired-reservations';
 import { parseProductImageUrls } from '../lib/parse-product-images';
 import { audienceToVisibility } from '../lib/store-mappers';
 import type { StoreVisibility } from '../types/store';
@@ -34,7 +33,6 @@ export async function getStoreCatalog(
   audience: CatalogAudience,
 ): Promise<StoreCatalogItem[]> {
   const academy = await getOrCreateDefaultAcademy();
-  await releaseExpiredReservations(academy.id);
 
   const products = await db.product.findMany({
     where: {
