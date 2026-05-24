@@ -15,6 +15,7 @@ import {
   createStudentSchema,
   type CreateStudentSchema,
 } from '@/modules/students/schemas/create-student-schema';
+import { findPersonByEmail } from '@/modules/users/lib/find-person-by-email';
 import { provisionUserAccount } from '@/modules/users/lib/provision-user-account';
 
 type CreateStudentActionResult = {
@@ -132,6 +133,24 @@ export const createStudentAction = async (
 
     const normalizedPhone = parsed.data.phone.replace(/\D/g, '');
     const normalizedEmail = parsed.data.email.trim().toLowerCase();
+
+    const [existingStudentByContact, existingPersonByEmail] = await Promise.all([
+      db.student.findFirst({
+        where: {
+          academyId: academy.id,
+          OR: [{ email: normalizedEmail }, { phone: normalizedPhone }],
+        },
+        select: { id: true },
+      }),
+      findPersonByEmail(academy.id, normalizedEmail),
+    ]);
+
+    if (existingStudentByContact) {
+      return {
+        success: false,
+        message: 'Já existe um aluno cadastrado com esse email ou telefone.',
+      };
+    }
     const mappedGender = genderMap[parsed.data.gender];
     const mappedStatus = statusMap[parsed.data.status];
     const mappedGoal = goalMap[parsed.data.goal];
@@ -263,6 +282,12 @@ export const createStudentAction = async (
     let accessSuffix: string;
     if (!provisioning) {
       accessSuffix = ' Acesso de aluno será criado quando o status virar Ativo.';
+    } else if (provisioning.reusedExisting && provisioning.roleAdded) {
+      accessSuffix = existingPersonByEmail.hasInstructor
+        ? ' Este email já pertence a um professor — o acesso de aluno foi liberado com o mesmo login e senha. Email de confirmação enviado.'
+        : provisioning.emailSent
+          ? ' Este email já tinha cadastro no sistema — o acesso de aluno foi liberado com o mesmo login e senha. Email de confirmação enviado.'
+          : ' Este email já tinha cadastro no sistema — o acesso de aluno foi liberado com o mesmo login e senha, mas o email não pôde ser enviado.';
     } else if (provisioning.reusedExisting) {
       accessSuffix =
         ' Este email já tinha cadastro no sistema — o aluno usa o mesmo login e senha do acesso existente.';

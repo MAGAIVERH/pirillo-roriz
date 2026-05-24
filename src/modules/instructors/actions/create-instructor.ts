@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { AppRole } from '@/generated/prisma/client';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
+import { findPersonByEmail } from '@/modules/users/lib/find-person-by-email';
 import { provisionUserAccount } from '@/modules/users/lib/provision-user-account';
 
 const createInstructorSchema = z.object({
@@ -72,6 +73,10 @@ export const createInstructorAction = async (input: CreateInstructorInput) => {
     }
 
     const fullName = parsed.data.fullName.trim();
+    const existingPersonByEmail = await findPersonByEmail(
+      academy.id,
+      normalizedEmail,
+    );
 
     const provisioning = await provisionUserAccount({
       fullName,
@@ -109,11 +114,23 @@ export const createInstructorAction = async (input: CreateInstructorInput) => {
     revalidatePath('/admin/professores');
 
     const baseMessage = 'Professor cadastrado com sucesso.';
-    const accessSuffix = provisioning.reusedExisting
-      ? ' Este email já tinha cadastro no sistema — o professor usa o mesmo login e senha do acesso existente.'
-      : provisioning.emailSent
-        ? ' Email com acesso provisório enviado.'
-        : ' Acesso criado, mas o email de boas-vindas não pôde ser enviado.';
+    let accessSuffix: string;
+
+    if (provisioning.reusedExisting && provisioning.roleAdded) {
+      accessSuffix = existingPersonByEmail.hasStudent
+        ? ' Este email já pertence a um aluno — o acesso de professor foi liberado com o mesmo login e senha. Email de confirmação enviado.'
+        : provisioning.emailSent
+          ? ' Este email já tinha cadastro no sistema — o acesso de professor foi liberado com o mesmo login e senha. Email de confirmação enviado.'
+          : ' Este email já tinha cadastro no sistema — o acesso de professor foi liberado com o mesmo login e senha, mas o email não pôde ser enviado.';
+    } else if (provisioning.reusedExisting) {
+      accessSuffix =
+        ' Este email já tinha cadastro no sistema — o professor usa o mesmo login e senha do acesso existente.';
+    } else if (provisioning.emailSent) {
+      accessSuffix = ' Email com acesso provisório enviado.';
+    } else {
+      accessSuffix =
+        ' Acesso criado, mas o email de boas-vindas não pôde ser enviado.';
+    }
 
     return {
       success: true,

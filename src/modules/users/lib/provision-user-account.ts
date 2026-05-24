@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { generateTemporaryPassword } from '@/lib/generate-temporary-password';
 import { sendMail } from '@/lib/mail';
 
+import { buildRoleAddedEmail } from '../templates/role-added-email';
 import {
   buildWelcomeEmail,
   type WelcomeEmailRole,
@@ -26,10 +27,14 @@ type ProvisionUserAccountResult = {
   emailSent: boolean;
   /**
    * `true` quando o helper encontrou um User existente com o mesmo email
-   * e apenas adicionou o novo papel (sem regenerar senha nem enviar email).
-   * Útil para a UI explicar ao admin que a conta já existia.
+   * e apenas adicionou o novo papel (sem regenerar senha).
    */
   reusedExisting: boolean;
+  /**
+   * `true` quando um novo papel foi vinculado a uma conta já existente.
+   * Diferente de `reusedExisting && !roleAlreadyAssigned`.
+   */
+  roleAdded: boolean;
   message?: string;
 };
 
@@ -42,8 +47,10 @@ const APP_URL =
  * Cria um usuário no sistema de autenticação, vincula um papel (role)
  * dentro da academia e envia o email de boas-vindas com senha provisória.
  *
- * - Se já existir `User` com o mesmo email, reaproveita e apenas garante
- *   o papel da academia, sem regenerar senha.
+ * - Se já existir `User` com o mesmo email, reaproveita a conta e apenas
+ *   garante o papel da academia — sem regenerar senha.
+ * - Quando um novo papel é adicionado a conta existente, envia email
+ *   informando que o mesmo login/senha serve para a nova plataforma.
  * - Senha é hasheada usando o algoritmo configurado no Better-Auth, para
  *   permanecer compatível com o fluxo de login normal.
  */
@@ -57,6 +64,7 @@ export async function provisionUserAccount(
       success: false,
       emailSent: false,
       reusedExisting: false,
+      roleAdded: false,
       message: 'Email inválido para criar conta de acesso.',
     };
   }
@@ -67,7 +75,7 @@ export async function provisionUserAccount(
   });
 
   if (existing) {
-    await db.userRoleAssignment.upsert({
+    const existingRole = await db.userRoleAssignment.findUnique({
       where: {
         academyId_userId_role: {
           academyId: input.academyId,
@@ -75,21 +83,52 @@ export async function provisionUserAccount(
           role: input.role,
         },
       },
-      create: {
-        academyId: input.academyId,
-        userId: existing.id,
-        role: input.role,
-      },
-      update: {},
+      select: { id: true },
     });
+
+    if (!existingRole) {
+      await db.userRoleAssignment.create({
+        data: {
+          academyId: input.academyId,
+          userId: existing.id,
+          role: input.role,
+        },
+      });
+    }
+
+    const roleAdded = !existingRole;
+    let emailSent = false;
+
+    if (roleAdded) {
+      const loginUrl = `${APP_URL.replace(/\/$/, '')}${input.portalPath}`;
+      const email = buildRoleAddedEmail({
+        fullName: input.fullName,
+        email: normalizedEmail,
+        role: input.welcomeRole,
+        loginUrl,
+      });
+
+      const mailResult = await sendMail({
+        to: normalizedEmail,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+      });
+
+      emailSent = mailResult.sent;
+    }
 
     return {
       success: true,
       userId: existing.id,
-      emailSent: false,
+      emailSent,
       reusedExisting: true,
-      message:
-        'Usuário já existia no sistema. Vínculo de papel adicionado, senha não foi alterada.',
+      roleAdded,
+      message: roleAdded
+        ? emailSent
+          ? 'Conta existente reutilizada. Novo papel adicionado e email enviado.'
+          : 'Conta existente reutilizada. Novo papel adicionado, mas o email não pôde ser enviado.'
+        : 'Usuário já possuía este papel. Mesmo login e senha mantidos.',
     };
   }
 
@@ -155,6 +194,7 @@ export async function provisionUserAccount(
     userId,
     emailSent: mailResult.sent,
     reusedExisting: false,
+    roleAdded: false,
     message: mailResult.sent
       ? 'Conta criada e email enviado.'
       : 'Conta criada, mas o email de boas-vindas não pôde ser enviado.',
