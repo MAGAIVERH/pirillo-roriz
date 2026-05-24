@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { assertAdminAction } from '@/lib/admin-action';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
@@ -29,6 +30,11 @@ export const updateClassCapacityAction = async (
       success: false,
       message: parsed.error.issues[0]?.message ?? 'Dados inválidos.',
     };
+  }
+
+  const auth = await assertAdminAction();
+  if (!auth.success) {
+    return { success: false, message: auth.message };
   }
 
   try {

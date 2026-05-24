@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+
+import { assertAdminAction } from '@/lib/admin-action';
 import { calculateStudentProgress } from '../lib/calcule-student-progress';
 
 const recalculateStudentProgressSchema = z.object({
@@ -22,6 +24,11 @@ export const recalculateStudentProgressAction = async (
       success: false,
       message: parsed.error.issues[0]?.message ?? 'Dados inválidos.',
     };
+  }
+
+  const auth = await assertAdminAction();
+  if (!auth.success) {
+    return { success: false, message: auth.message };
   }
 
   const result = await calculateStudentProgress(parsed.data.studentId);

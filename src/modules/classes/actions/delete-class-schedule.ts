@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { assertAdminAction } from '@/lib/admin-action';
+import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
 const deleteClassScheduleSchema = z.object({
@@ -24,10 +26,36 @@ export const deleteClassScheduleAction = async (
     };
   }
 
+  const auth = await assertAdminAction();
+  if (!auth.success) {
+    return { success: false, message: auth.message };
+  }
+
   try {
-    await db.classSchedule.delete({
+    const academy = await getOrCreateDefaultAcademy();
+
+    const schedule = await db.classSchedule.findFirst({
       where: {
         id: parsed.data.scheduleId,
+        class: {
+          academyId: academy.id,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!schedule) {
+      return {
+        success: false,
+        message: 'Horário não encontrado.',
+      };
+    }
+
+    await db.classSchedule.delete({
+      where: {
+        id: schedule.id,
       },
     });
 

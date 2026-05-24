@@ -2,13 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { assertAdminAction } from '@/lib/admin-action';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 import {
   registerPaymentSchema,
   type RegisterPaymentSchema,
 } from '@/modules/finance/schemas/register-payment-schema';
-import { syncStudentDelinquencyStatus } from '@/modules/students/actions/sync-student-delinquency';
+import { runStudentDelinquencySync } from '@/modules/students/lib/sync-student-delinquency-core';
 
 export const registerPaymentAction = async (
   input: RegisterPaymentSchema,
@@ -20,6 +21,11 @@ export const registerPaymentAction = async (
       success: false,
       message: parsed.error.issues[0]?.message ?? 'Dados inválidos.',
     };
+  }
+
+  const auth = await assertAdminAction();
+  if (!auth.success) {
+    return { success: false, message: auth.message };
   }
 
   try {
@@ -84,7 +90,7 @@ export const registerPaymentAction = async (
       }
     });
 
-    await syncStudentDelinquencyStatus(invoice.studentId);
+    await runStudentDelinquencySync(invoice.studentId);
 
     revalidatePath(`/admin/alunos/${invoice.studentId}`);
     revalidatePath('/admin/financeiro');

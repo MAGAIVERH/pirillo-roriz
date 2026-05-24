@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 
+import { assertAdminAction } from '@/lib/admin-action';
 import { db } from '@/lib/db';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { calculateStudentProgress } from '../lib/calcule-student-progress';
@@ -26,6 +27,11 @@ export const deleteStudentManualAttendanceAction = async (
       success: false,
       message: parsed.error.issues[0]?.message ?? 'Dados inválidos.',
     };
+  }
+
+  const auth = await assertAdminAction();
+  if (!auth.success) {
+    return { success: false, message: auth.message };
   }
 
   try {

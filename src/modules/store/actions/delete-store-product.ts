@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { assertAdminAction } from '@/lib/admin-action';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
@@ -10,6 +11,11 @@ type ActionResult = { success: boolean; message: string };
 export async function deleteStoreProductAction(
   productId: string,
 ): Promise<ActionResult> {
+  const auth = await assertAdminAction();
+  if (!auth.success) {
+    return { success: false, message: auth.message };
+  }
+
   try {
     const academy = await getOrCreateDefaultAcademy();
 

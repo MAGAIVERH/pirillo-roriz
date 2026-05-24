@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { AppRole } from '@/generated/prisma/client';
+import { assertAdminAction } from '@/lib/admin-action';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 import { findPersonByEmail } from '@/modules/users/lib/find-person-by-email';
@@ -37,6 +38,11 @@ export const createInstructorAction = async (input: CreateInstructorInput) => {
       success: false,
       message: parsed.error.issues[0]?.message ?? 'Dados inválidos.',
     };
+  }
+
+  const auth = await assertAdminAction();
+  if (!auth.success) {
+    return { success: false, message: auth.message };
   }
 
   try {

@@ -24,14 +24,7 @@ export async function getWarningAuthorUserId(): Promise<string> {
     return adminAssignment.userId;
   }
 
-  const fallbackUser = await db.user.findFirst({
-    select: { id: true },
-    orderBy: { createdAt: 'asc' },
-  });
-
-  if (!fallbackUser) {
-    throw new Error('Nenhum usuário encontrado para registrar o aviso.');
-  }
-
-  return fallbackUser.id;
+  throw new Error(
+    'Não foi possível identificar o autor do aviso. Faça login novamente.',
+  );
 }

@@ -9,6 +9,7 @@ import {
   StudentGoal,
   StudentStatus,
 } from '@/generated/prisma/client';
+import { assertAdminAction } from '@/lib/admin-action';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 import {
@@ -71,6 +72,11 @@ export const createStudentAction = async (
   if (!parsed.success) {
     const firstError = parsed.error.issues[0]?.message ?? 'Dados inválidos.';
     return { success: false, message: firstError };
+  }
+
+  const auth = await assertAdminAction();
+  if (!auth.success) {
+    return { success: false, message: auth.message };
   }
 
   try {

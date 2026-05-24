@@ -1,9 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 
-import { auth } from '@/lib/auth';
+import { resolveAuthenticatedHomePath } from '@/lib/auth-redirect';
 import { ensureAdminUser } from '@/lib/ensure-admin-user';
 import { LoginForm } from '@/modules/auth/components/login-form';
 
@@ -17,9 +16,9 @@ export default async function LoginPage() {
     console.error('ensureAdminUser falhou', error);
   }
 
-  const session = await auth.api.getSession({ headers: await headers() });
+  const homePath = await resolveAuthenticatedHomePath();
 
-  if (session) {
+  if (homePath === '/admin') {
     redirect('/admin');
   }
 

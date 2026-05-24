@@ -1,5 +1,6 @@
 import type { Prisma, StudentStatus } from '@/generated/prisma/client';
 
+import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
 
 type DbClient =
@@ -40,8 +41,13 @@ export async function changeStudentStatus(
   let fromStatus = input.fromStatus;
 
   if (!fromStatus) {
-    const student = await client.student.findUnique({
-      where: { id: input.studentId },
+    const academy = await getOrCreateDefaultAcademy();
+
+    const student = await client.student.findFirst({
+      where: {
+        id: input.studentId,
+        academyId: academy.id,
+      },
       select: { status: true },
     });
 
