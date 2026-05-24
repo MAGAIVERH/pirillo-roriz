@@ -25,6 +25,18 @@ export type InstructorContext = {
   academyId: string;
 };
 
+export type StudentContext = {
+  user: SessionUser;
+  student: {
+    id: string;
+    fullName: string;
+    preferredName: string | null;
+    email: string | null;
+    status: string;
+  };
+  academyId: string;
+};
+
 const ADMIN_ROLES: AppRole[] = [
   AppRole.ADMIN_MASTER,
   AppRole.ADMIN,
@@ -104,6 +116,50 @@ export async function requireInstructorContext(): Promise<InstructorContext> {
   return {
     user,
     instructor,
+    academyId: academy.id,
+  };
+}
+
+export async function requireStudentContext(): Promise<StudentContext> {
+  const user = await getAuthSession();
+
+  if (!user) {
+    redirect('/aluno/login');
+  }
+
+  const academy = await getOrCreateDefaultAcademy();
+
+  const [studentRole, student] = await Promise.all([
+    db.userRoleAssignment.findFirst({
+      where: {
+        userId: user.id,
+        academyId: academy.id,
+        role: AppRole.STUDENT,
+      },
+      select: { id: true },
+    }),
+    db.student.findFirst({
+      where: {
+        userId: user.id,
+        academyId: academy.id,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        preferredName: true,
+        email: true,
+        status: true,
+      },
+    }),
+  ]);
+
+  if (!studentRole || !student) {
+    redirect('/aluno/login');
+  }
+
+  return {
+    user,
+    student,
     academyId: academy.id,
   };
 }
