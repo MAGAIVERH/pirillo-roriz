@@ -33,8 +33,8 @@ const navigation = [
   { label: 'Início', href: '/professor', icon: Home },
   { label: 'Alunos', href: '/professor/alunos', icon: Users },
   { label: 'Turmas', href: '/professor/turmas', icon: CalendarDays },
-  { label: 'Avisos', href: '/professor/avisos', icon: Megaphone, disabled: true },
-  { label: 'Loja', href: '/professor/loja', icon: ShoppingBag, disabled: true },
+  { label: 'Avisos', href: '/professor/avisos', icon: Megaphone },
+  { label: 'Loja', href: '/professor/loja', icon: ShoppingBag },
   { label: 'QR Code', href: '/professor/qr-code', icon: QrCode, disabled: true },
 ];
 
