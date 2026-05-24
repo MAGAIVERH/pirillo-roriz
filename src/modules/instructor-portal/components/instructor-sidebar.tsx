@@ -27,7 +27,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { shellHeaderHeightClass } from '@/components/layout/shell-header';
-import { PortalSwitchLink } from '@/modules/auth/components/portal-switch-link';
 import { PortalUserMenu } from '@/modules/auth/components/portal-user-menu';
 
 const navigation: {
@@ -58,13 +57,9 @@ type InstructorSidebarProps = {
     email: string;
     image?: string | null;
   };
-  showStudentPortalLink?: boolean;
 };
 
-export const InstructorSidebar = ({
-  user,
-  showStudentPortalLink = false,
-}: InstructorSidebarProps) => {
+export const InstructorSidebar = ({ user }: InstructorSidebarProps) => {
   const pathname = usePathname();
   const { state, isMobile, setOpenMobile } = useSidebar();
 
@@ -172,14 +167,7 @@ export const InstructorSidebar = ({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="space-y-2 border-t border-white/10 bg-zinc-950 p-2">
-        {showStudentPortalLink ? (
-          <PortalSwitchLink
-            href="/aluno"
-            label="Ir para portal do aluno"
-            isCollapsed={isCollapsed}
-          />
-        ) : null}
+      <SidebarFooter className="border-t border-white/10 bg-zinc-950 p-2">
         <PortalUserMenu
           user={user}
           isCollapsed={isCollapsed}

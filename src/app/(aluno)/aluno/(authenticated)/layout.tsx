@@ -3,10 +3,7 @@ import type { ReactNode } from 'react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ensureStudentQrToken } from '@/modules/attendance/lib/ensure-student-qr-token';
-import {
-  getPortalAccessForUser,
-  requireStudentContext,
-} from '@/lib/session-context';
+import { requireStudentContext } from '@/lib/session-context';
 import { StudentHeader } from '@/modules/student-portal/components/student-header';
 import { StudentSidebar } from '@/modules/student-portal/components/student-sidebar';
 import { getStudentPortalNavCounts } from '@/modules/student-portal/queries/get-student-portal-nav-counts';
@@ -20,9 +17,8 @@ export default async function AlunoAuthenticatedLayout({
 }: AlunoAuthenticatedLayoutProps) {
   const { user, student, academyId } = await requireStudentContext();
 
-  const [{ unreadWarnings }, portalAccess] = await Promise.all([
+  const [{ unreadWarnings }] = await Promise.all([
     getStudentPortalNavCounts(user.id, student.id),
-    getPortalAccessForUser(user.id, user.email),
     ensureStudentQrToken(student.id, academyId),
   ]);
 
@@ -35,11 +31,7 @@ export default async function AlunoAuthenticatedLayout({
   return (
     <TooltipProvider delayDuration={150}>
       <SidebarProvider defaultOpen className="min-w-0 overflow-x-hidden">
-        <StudentSidebar
-          user={sessionUser}
-          unreadWarnings={unreadWarnings}
-          showProfessorPortalLink={portalAccess.hasInstructorAccess}
-        />
+        <StudentSidebar user={sessionUser} unreadWarnings={unreadWarnings} />
 
         <SidebarInset className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-black text-white">
           <div className="flex min-h-screen min-w-0 max-w-full flex-col overflow-x-hidden">
