@@ -25,6 +25,7 @@ type StudentProgressCardProps = {
     absencesSincePromotion: number;
     lastAttendanceAt: string;
   } | null;
+  showRecalculateButton?: boolean;
 };
 
 const statusLabelMap: Record<ProgressStatus, string> = {
@@ -61,6 +62,7 @@ const ProgressInfoCard = ({
 export const StudentProgressCard = ({
   studentId,
   progress,
+  showRecalculateButton = true,
 }: StudentProgressCardProps) => {
   const [isPending, startTransition] = useTransition();
 
@@ -84,14 +86,16 @@ export const StudentProgressCard = ({
       <CardHeader className='flex flex-row items-center justify-between space-y-0'>
         <CardTitle className='text-xl'>Progresso de graduação</CardTitle>
 
-        <Button
-          type='button'
-          onClick={handleRecalculate}
-          disabled={isPending}
-          className='bg-red-600 text-white hover:bg-red-500'
-        >
-          {isPending ? 'Recalculando...' : 'Recalcular'}
-        </Button>
+        {showRecalculateButton ? (
+          <Button
+            type='button'
+            onClick={handleRecalculate}
+            disabled={isPending}
+            className='bg-red-600 text-white hover:bg-red-500'
+          >
+            {isPending ? 'Recalculando...' : 'Recalcular'}
+          </Button>
+        ) : null}
       </CardHeader>
 
       <CardContent>

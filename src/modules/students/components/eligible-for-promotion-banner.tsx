@@ -11,6 +11,7 @@ type EligibleForPromotionBannerProps = {
   nextDegreeNumber: number | null;
   projectedEligibilityDate: string | null;
   attendancesSincePromotion: number;
+  readOnly?: boolean;
 };
 
 function formatBeltLabel(belt: string, degree: number | null): string {
@@ -26,6 +27,7 @@ export function EligibleForPromotionBanner({
   nextDegreeNumber,
   projectedEligibilityDate,
   attendancesSincePromotion,
+  readOnly = false,
 }: EligibleForPromotionBannerProps) {
   const fromLabel = formatBeltLabel(currentBeltName, currentDegreeNumber);
   const toLabel = formatBeltLabel(nextBeltName, nextDegreeNumber);
@@ -54,12 +56,18 @@ export function EligibleForPromotionBanner({
         </div>
       </div>
 
-      <PromoteStudentDialog
-        studentId={studentId}
-        studentName={studentName}
-        fromLabel={fromLabel}
-        toLabel={toLabel}
-      />
+      {!readOnly ? (
+        <PromoteStudentDialog
+          studentId={studentId}
+          studentName={studentName}
+          fromLabel={fromLabel}
+          toLabel={toLabel}
+        />
+      ) : (
+        <p className='text-xs text-zinc-400'>
+          A graduação é registrada pela equipe administrativa.
+        </p>
+      )}
     </section>
   );
 }
