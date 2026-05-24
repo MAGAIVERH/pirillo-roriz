@@ -83,3 +83,32 @@ select {
     display: none;
   }
 }
+
+.instructor-qr-scanner.is-active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #09090b;
+}
+
+.instructor-qr-scanner.is-active video {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 320px;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+@media (min-width: 640px) {
+  .instructor-qr-scanner.is-active video {
+    min-height: 420px;
+  }
+}
+
+.instructor-qr-scanner.is-active #qr-shaded-region {
+  border-color: rgb(239 68 68 / 0.85) !important;
+}
+
+.instructor-qr-scanner.is-active #qr-shaded-region > div {
+  background: rgb(239 68 68 / 0.12) !important;
+}
