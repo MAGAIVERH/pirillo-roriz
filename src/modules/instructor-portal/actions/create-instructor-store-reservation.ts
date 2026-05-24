@@ -2,66 +2,56 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { ProductAudience } from '@/generated/prisma/client';
 import { getOrCreateDefaultAcademy } from '@/lib/academy';
 import { db } from '@/lib/db';
+import { requireInstructorContext } from '@/lib/session-context';
+import {
+  instructorStoreReservationSchema,
+  type InstructorStoreReservationInput,
+} from '@/modules/instructor-portal/schemas/instructor-store-reservation-schema';
 
 type ActionResult = { success: boolean; message: string };
 
-type CreateStoreReservationInput = {
-  productId: string;
-  studentId?: string;
-  instructorId?: string;
-  quantity?: number;
-};
+const instructorAudience: ProductAudience[] = ['ALL', 'INSTRUCTORS'];
 
-export async function createStoreReservationAction(
-  input: CreateStoreReservationInput,
+export async function createInstructorStoreReservationAction(
+  input: InstructorStoreReservationInput,
 ): Promise<ActionResult> {
-  const quantity = input.quantity ?? 1;
+  const parsed = instructorStoreReservationSchema.safeParse(input);
 
-  if (!input.studentId && !input.instructorId) {
+  if (!parsed.success) {
     return {
       success: false,
-      message: 'Informe o aluno ou professor que está reservando.',
+      message: parsed.error.issues[0]?.message ?? 'Dados inválidos.',
     };
   }
 
-  if (input.studentId && input.instructorId) {
-    return {
-      success: false,
-      message: 'Reserva inválida: informe apenas aluno ou professor.',
-    };
-  }
-
-  if (!Number.isInteger(quantity) || quantity < 1) {
-    return {
-      success: false,
-      message: 'Quantidade inválida.',
-    };
-  }
+  const quantity = parsed.data.quantity ?? 1;
 
   try {
+    const { instructor } = await requireInstructorContext();
     const academy = await getOrCreateDefaultAcademy();
 
     const product = await db.product.findFirst({
       where: {
-        id: input.productId,
+        id: parsed.data.productId,
         academyId: academy.id,
         active: true,
+        audience: { in: instructorAudience },
       },
       select: {
         id: true,
         name: true,
         priceInCents: true,
         stockQuantity: true,
-        pickupOnly: true,
       },
     });
 
     if (!product) {
       return {
         success: false,
-        message: 'Produto não encontrado.',
+        message: 'Produto não encontrado ou indisponível para você.',
       };
     }
 
@@ -92,8 +82,7 @@ export async function createStoreReservationAction(
       await tx.order.create({
         data: {
           academyId: academy.id,
-          studentId: input.studentId ?? null,
-          instructorId: input.instructorId ?? null,
+          instructorId: instructor.id,
           status: 'PENDING',
           subtotalInCents: lineTotal,
           totalInCents: lineTotal,
@@ -111,12 +100,12 @@ export async function createStoreReservationAction(
       });
     });
 
-    revalidatePath('/admin/loja');
     revalidatePath('/professor/loja');
+    revalidatePath('/admin/loja');
 
     return {
       success: true,
-      message: 'Produto reservado para retirada na academia.',
+      message: 'Produto reservado. Retire na academia em até 2 dias.',
     };
   } catch (error) {
     if (error instanceof Error && error.message === 'STOCK_UNAVAILABLE') {
@@ -126,7 +115,7 @@ export async function createStoreReservationAction(
       };
     }
 
-    console.error('createStoreReservationAction error', error);
+    console.error('createInstructorStoreReservationAction error', error);
 
     return {
       success: false,
