@@ -1,8 +1,12 @@
 import type { ReactNode } from 'react';
-import { Users } from 'lucide-react';
 
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { ensureStudentQrToken } from '@/modules/attendance/lib/ensure-student-qr-token';
 import { requireStudentContext } from '@/lib/session-context';
-import { StudentSignOutButton } from '@/modules/student-portal/components/student-sign-out-button';
+import { StudentHeader } from '@/modules/student-portal/components/student-header';
+import { StudentSidebar } from '@/modules/student-portal/components/student-sidebar';
+import { getStudentPortalNavCounts } from '@/modules/student-portal/queries/get-student-portal-nav-counts';
 
 type AlunoAuthenticatedLayoutProps = Readonly<{
   children: ReactNode;
@@ -11,35 +15,36 @@ type AlunoAuthenticatedLayoutProps = Readonly<{
 export default async function AlunoAuthenticatedLayout({
   children,
 }: AlunoAuthenticatedLayoutProps) {
-  const { student, user } = await requireStudentContext();
-  const displayName = student.preferredName?.trim() || student.fullName;
+  const { user, student, academyId } = await requireStudentContext();
+
+  const [{ unreadWarnings }] = await Promise.all([
+    getStudentPortalNavCounts(user.id, student.id),
+    ensureStudentQrToken(student.id, academyId),
+  ]);
+
+  const sessionUser = {
+    name: student.preferredName?.trim() || student.fullName,
+    email: user.email,
+    image: user.image,
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <header className="border-b border-white/10 bg-zinc-950/90">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-600/15 text-red-500">
-              <Users className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-red-500">
-                Portal do aluno
-              </p>
-              <p className="text-sm font-medium text-white">{displayName}</p>
-            </div>
-          </div>
+    <TooltipProvider delayDuration={150}>
+      <SidebarProvider defaultOpen className="min-w-0 overflow-x-hidden">
+        <StudentSidebar user={sessionUser} unreadWarnings={unreadWarnings} />
 
-          <div className="flex items-center gap-3">
-            <span className="hidden text-xs text-zinc-500 sm:inline">
-              {user.email}
-            </span>
-            <StudentSignOutButton />
-          </div>
-        </div>
-      </header>
+        <SidebarInset className="min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-black text-white">
+          <div className="flex min-h-screen min-w-0 max-w-full flex-col overflow-x-hidden">
+            <StudentHeader />
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">{children}</main>
-    </div>
+            <main className="min-w-0 max-w-full flex-1 overflow-x-hidden bg-zinc-950/70 px-4 py-6 sm:px-6 lg:px-8">
+              <div className="mx-auto w-full min-w-0 max-w-[1200px]">
+                {children}
+              </div>
+            </main>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }

@@ -17,6 +17,7 @@ type InstructorStoreProductDetailModalProps = {
   onReserve: (productId: string) => void;
   isPending: boolean;
   pendingProductId: string | null;
+  allowReserve?: boolean;
 };
 
 function formatBRL(cents: number) {
@@ -32,6 +33,7 @@ export function InstructorStoreProductDetailModal({
   onReserve,
   isPending,
   pendingProductId,
+  allowReserve = true,
 }: InstructorStoreProductDetailModalProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -187,15 +189,21 @@ export function InstructorStoreProductDetailModal({
             </div>
           ) : null}
 
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => onReserve(product.id)}
-            className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <ShoppingBag className="h-4 w-4 shrink-0" />
-            {isReserving ? 'Reservando...' : 'Reservar produto'}
-          </button>
+          {allowReserve ? (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => onReserve(product.id)}
+              className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ShoppingBag className="h-4 w-4 shrink-0" />
+              {isReserving ? 'Reservando...' : 'Reservar produto'}
+            </button>
+          ) : (
+            <p className="mt-6 rounded-xl border border-white/10 bg-zinc-900 px-4 py-3 text-center text-sm text-zinc-400">
+              Retirada presencial na academia. Fale com a recepção para reservar.
+            </p>
+          )}
         </div>
       </div>
     </div>

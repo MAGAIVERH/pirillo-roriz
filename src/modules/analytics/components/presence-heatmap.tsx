@@ -10,6 +10,7 @@ const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 type PresenceHeatmapProps = {
   presence: PresenceData;
+  showAcademySummary?: boolean;
 };
 
 type DayCellProps = {
@@ -70,7 +71,10 @@ function DayCell({ day, max }: DayCellProps) {
   );
 }
 
-export function PresenceHeatmap({ presence }: PresenceHeatmapProps) {
+export function PresenceHeatmap({
+  presence,
+  showAcademySummary = true,
+}: PresenceHeatmapProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const weekCount = presence.calendarWeeks.length;
 
@@ -247,33 +251,35 @@ export function PresenceHeatmap({ presence }: PresenceHeatmapProps) {
         dias futuros ficam vazios até receberem check-ins.
       </p>
 
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-        <div className="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-          <p className="text-xs text-zinc-500">Frequência média geral</p>
-          <p className="mt-1 text-2xl font-bold text-white">
-            {formatPercent(presence.attendanceRate, 0)}
-          </p>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
-          <p className="text-xs text-zinc-500">Alunos com presença &lt; 50%</p>
-          <p className="mt-1 text-2xl font-bold text-white">
-            {presence.studentsBelowHalfRate}
-          </p>
-        </div>
-        <div className="rounded-xl border border-white/10 bg-zinc-900/60 p-4 sm:col-span-2 md:col-span-1">
-          <p className="flex items-center gap-1 text-xs text-zinc-500">
-            <Users className="h-3 w-3 shrink-0" /> Aula mais presente
-          </p>
-          <p className="mt-1 truncate text-sm font-semibold text-white">
-            {presence.topClass?.name ?? 'Sem dados'}
-          </p>
-          {presence.topClass?.schedule && (
-            <p className="truncate text-xs text-zinc-500">
-              {presence.topClass.schedule}
+      {showAcademySummary ? (
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+          <div className="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
+            <p className="text-xs text-zinc-500">Frequência média geral</p>
+            <p className="mt-1 text-2xl font-bold text-white">
+              {formatPercent(presence.attendanceRate, 0)}
             </p>
-          )}
+          </div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/60 p-4">
+            <p className="text-xs text-zinc-500">Alunos com presença &lt; 50%</p>
+            <p className="mt-1 text-2xl font-bold text-white">
+              {presence.studentsBelowHalfRate}
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-zinc-900/60 p-4 sm:col-span-2 md:col-span-1">
+            <p className="flex items-center gap-1 text-xs text-zinc-500">
+              <Users className="h-3 w-3 shrink-0" /> Aula mais presente
+            </p>
+            <p className="mt-1 truncate text-sm font-semibold text-white">
+              {presence.topClass?.name ?? 'Sem dados'}
+            </p>
+            {presence.topClass?.schedule && (
+              <p className="truncate text-xs text-zinc-500">
+                {presence.topClass.schedule}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
